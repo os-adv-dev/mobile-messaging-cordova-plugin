@@ -1,10 +1,4 @@
 module.exports = function(ctx) {
-    if (ctx.opts.platforms.indexOf('ios') < 0) { // project doesn't support ios at all
-        return;
-    }
-    if (ctx.opts.cordova.platforms.length > 0 && ctx.opts.cordova.platforms.indexOf('ios') < 0) { // corodova prepare was explicitly called for non-ios platforms
-        return;
-    }
 
     var ConfigParser = ctx.requireCordovaModule('cordova-common').ConfigParser;
     var appConfig = new ConfigParser('config.xml');

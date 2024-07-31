@@ -20,13 +20,15 @@
 	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
 	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
-	<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
 
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
+		
+		<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
+
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
                 <string>remote-notification</string>
