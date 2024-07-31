@@ -68,6 +68,13 @@
 				<pod name="MobileMessaging/Inbox" spec="12.5.1" />
 			</pods>
 		</podspec>
+
+		<podspec>
+            <target name="MobileMessagingNotificationExtension">
+                <inherit>search_paths</inherit>
+            </target>
+        </podspec>
+		
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 
 	<preference name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
