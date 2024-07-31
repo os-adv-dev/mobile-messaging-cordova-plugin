@@ -21,11 +21,12 @@ module.exports = function(ctx) {
     console.log(" --- ✅ --- Variables --- IOS_EXTENSION_APP_GROUP: "+iosExtenstionAppGroup);
     console.log(" --- ✅ --- Variables --- IOS_EXTENSION_APP_CODE: "+iosExtenstionAppCode);
 
-    if (pluginConfig === undefined) {
+    /**if (pluginConfig === undefined) {
         console.log("ERROR: Missing plugin variables. It's required to provide 'IOS_EXTENSION_APP_CODE' and 'IOS_EXTENSION_APP_GROUP'");
         console.log('-----------------------------');
         return;
-    }
+    }**/
+   
     var variables = pluginConfig.variables;
     var appName = appConfig.name();
 
