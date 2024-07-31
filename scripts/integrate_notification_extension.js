@@ -9,11 +9,11 @@ module.exports = function(ctx) {
     var iosExtenstionAppGroup;
     for (const arg of args) {
       if (arg.includes('IOS_EXTENSION_APP_CODE')){
-        var stringArray = arg.split(""="");
+        var stringArray = arg.split("=");
         iosExtenstionAppCode = stringArray.slice(-1).pop();
       }
       if (arg.includes('IOS_EXTENSION_APP_GROUP')){
-        var stringArray = arg.split(""="");
+        var stringArray = arg.split("=");
         iosExtenstionAppGroup = stringArray.slice(-1).pop();
       }
     }
