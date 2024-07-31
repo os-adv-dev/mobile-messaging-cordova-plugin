@@ -54,7 +54,7 @@ module.exports = function(ctx) {
     var appGroup = iosExtenstionAppGroup; //ctx.opts.options.IOS_EXTENSION_APP_GROUP || variables.IOS_EXTENSION_APP_GROUP;
     var projectPath = `platforms/ios/${getProjectName()}.xcodeproj`;
     var projectMainTarget = getProjectName();
-    var overrideSigning = true;//ctx.opts.options.IOS_OVERRIDE_EXTENSION_SIGNING || variables.IOS_OVERRIDE_EXTENSION_SIGNING;
+    var overrideSigning = false;//ctx.opts.options.IOS_OVERRIDE_EXTENSION_SIGNING || variables.IOS_OVERRIDE_EXTENSION_SIGNING;
     
     console.log(" --- ✅ --- Variables --- projectPath: "+projectPath);
     console.log(" --- ✅ --- Variables --- projectMainTarget: "+projectMainTarget);
