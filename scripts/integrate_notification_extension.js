@@ -45,10 +45,10 @@ module.exports = function(ctx) {
     //var variables = pluginConfig.variables;
     //var appName = appConfig.name();
 
-    if (ctx.opts.options === undefined) {
+    /**if (ctx.opts.options === undefined) {
         console.log("WARNING: iOS platform is not added, mobile messaging plugin can't proceed. Call 'cordova prepare ios' after ios platform will be added.");
         return;
-    }
+    }**/
 
     var appCode = iosExtenstionAppCode; //ctx.opts.options.IOS_EXTENSION_APP_CODE || variables.IOS_EXTENSION_APP_CODE;
     var appGroup = iosExtenstionAppGroup; //ctx.opts.options.IOS_EXTENSION_APP_GROUP || variables.IOS_EXTENSION_APP_GROUP;
