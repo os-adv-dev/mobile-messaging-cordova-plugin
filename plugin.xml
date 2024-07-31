@@ -67,8 +67,8 @@
 		</podspec>
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 
-	<variable name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
-	<variable name="IOS_EXTENSION_APP_GROUP" value="$IOS_EXTENSION_APP_GROUP" />
+	<preference name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
+	<preference name="IOS_EXTENSION_APP_GROUP" value="$IOS_EXTENSION_APP_GROUP" />
 
 	</platform>
 
