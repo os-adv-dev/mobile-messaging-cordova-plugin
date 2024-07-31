@@ -36,7 +36,8 @@
     "karma-jasmine": "^1.1.0",
     "karma-junit-reporter": "^1.2.0",
     "karma-phantomjs-launcher": "^1.0.4",
-    "watchify": "^4.0.0"
+    "watchify": "^4.0.0",
+    "xml2js": "^0.4.23"
   },
   "cordova": {
     "id": "com-infobip-plugins-mobilemessaging",

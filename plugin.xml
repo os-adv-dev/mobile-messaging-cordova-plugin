@@ -27,6 +27,7 @@
 
 	<platform name="ios">
 		
+		<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
 		<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">

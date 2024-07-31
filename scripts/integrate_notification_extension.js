@@ -1,3 +1,15 @@
+function getProjectName() {
+    var config = fs.readFileSync('config.xml').toString();
+    var parseString = require('xml2js').parseString;
+    var name;
+    parseString(config, function (err, result) {
+        name = result.widget.name.toString();
+        const r = /\B\s+|\s+\B/g;  //Removes trailing and leading spaces
+        name = name.replace(r, '');
+    });
+    return name || null;
+}
+
 module.exports = function(ctx) {
 
     var ConfigParser = ctx.requireCordovaModule('cordova-common').ConfigParser;
@@ -28,7 +40,7 @@ module.exports = function(ctx) {
     }**/
    
     var variables = pluginConfig.variables;
-    var appName = appConfig.name();
+    //var appName = appConfig.name();
 
     if (ctx.opts.options === undefined) {
         console.log("WARNING: iOS platform is not added, mobile messaging plugin can't proceed. Call 'cordova prepare ios' after ios platform will be added.");
@@ -37,9 +49,9 @@ module.exports = function(ctx) {
 
     var appCode = iosExtenstionAppCode; //ctx.opts.options.IOS_EXTENSION_APP_CODE || variables.IOS_EXTENSION_APP_CODE;
     var appGroup = iosExtenstionAppGroup; //ctx.opts.options.IOS_EXTENSION_APP_GROUP || variables.IOS_EXTENSION_APP_GROUP;
-    var projectPath = ctx.opts.options.IOS_EXTENSION_PROJECT_PATH || variables.IOS_EXTENSION_PROJECT_PATH || `platforms/ios/${appName}.xcodeproj`;
-    var projectMainTarget = ctx.opts.options.IOS_EXTENSION_PROJECT_MAIN_TARGET || variables.IOS_EXTENSION_PROJECT_MAIN_TARGET || appName;
-    var overrideSigning = ctx.opts.options.IOS_OVERRIDE_EXTENSION_SIGNING || variables.IOS_OVERRIDE_EXTENSION_SIGNING;
+    var projectPath = `platforms/ios/${getProjectName()}.xcodeproj`;
+    var projectMainTarget = getProjectName();
+    var overrideSigning = true;//ctx.opts.options.IOS_OVERRIDE_EXTENSION_SIGNING || variables.IOS_OVERRIDE_EXTENSION_SIGNING;
     
     console.log(" --- ✅ --- Variables --- projectPath: "+projectPath);
     console.log(" --- ✅ --- Variables --- projectMainTarget: "+projectMainTarget);
@@ -84,3 +96,4 @@ module.exports = function(ctx) {
             }
         });
 }
+
