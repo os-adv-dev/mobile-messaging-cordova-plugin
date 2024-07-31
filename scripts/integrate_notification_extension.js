@@ -1,3 +1,6 @@
+
+var fs = require('fs');
+
 function getProjectName() {
     var config = fs.readFileSync('config.xml').toString();
     var parseString = require('xml2js').parseString;
@@ -39,7 +42,7 @@ module.exports = function(ctx) {
         return;
     }**/
    
-    var variables = pluginConfig.variables;
+    //var variables = pluginConfig.variables;
     //var appName = appConfig.name();
 
     if (ctx.opts.options === undefined) {
