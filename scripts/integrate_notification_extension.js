@@ -4,6 +4,23 @@ module.exports = function(ctx) {
     var appConfig = new ConfigParser('config.xml');
     var pluginConfig = appConfig.getPlugin(ctx.opts.plugin.id);
 
+    const args = process.argv
+    var iosExtenstionAppCode;
+    var iosExtenstionAppGroup;
+    for (const arg of args) {
+      if (arg.includes('IOS_EXTENSION_APP_CODE')){
+        var stringArray = arg.split(""="");
+        iosExtenstionAppCode = stringArray.slice(-1).pop();
+      }
+      if (arg.includes('IOS_EXTENSION_APP_GROUP')){
+        var stringArray = arg.split(""="");
+        iosExtenstionAppGroup = stringArray.slice(-1).pop();
+      }
+    }
+
+    console.log(" --- ✅ --- Variables --- IOS_EXTENSION_APP_GROUP: "+iosExtenstionAppGroup);
+    console.log(" --- ✅ --- Variables --- IOS_EXTENSION_APP_CODE: "+iosExtenstionAppCode);
+
     if (pluginConfig === undefined) {
         console.log("ERROR: Missing plugin variables. It's required to provide 'IOS_EXTENSION_APP_CODE' and 'IOS_EXTENSION_APP_GROUP'");
         console.log('-----------------------------');
@@ -17,11 +34,15 @@ module.exports = function(ctx) {
         return;
     }
 
-    var appCode = ctx.opts.options.IOS_EXTENSION_APP_CODE || variables.IOS_EXTENSION_APP_CODE;
-    var appGroup = ctx.opts.options.IOS_EXTENSION_APP_GROUP || variables.IOS_EXTENSION_APP_GROUP;
+    var appCode = iosExtenstionAppCode; //ctx.opts.options.IOS_EXTENSION_APP_CODE || variables.IOS_EXTENSION_APP_CODE;
+    var appGroup = iosExtenstionAppGroup; //ctx.opts.options.IOS_EXTENSION_APP_GROUP || variables.IOS_EXTENSION_APP_GROUP;
     var projectPath = ctx.opts.options.IOS_EXTENSION_PROJECT_PATH || variables.IOS_EXTENSION_PROJECT_PATH || `platforms/ios/${appName}.xcodeproj`;
     var projectMainTarget = ctx.opts.options.IOS_EXTENSION_PROJECT_MAIN_TARGET || variables.IOS_EXTENSION_PROJECT_MAIN_TARGET || appName;
     var overrideSigning = ctx.opts.options.IOS_OVERRIDE_EXTENSION_SIGNING || variables.IOS_OVERRIDE_EXTENSION_SIGNING;
+    
+    console.log(" --- ✅ --- Variables --- projectPath: "+projectPath);
+    console.log(" --- ✅ --- Variables --- projectMainTarget: "+projectMainTarget);
+    console.log(" --- ✅ --- Variables --- overrideSigning: "+overrideSigning);
 
 
     if (!(appCode && appGroup && projectPath && projectMainTarget)) {
