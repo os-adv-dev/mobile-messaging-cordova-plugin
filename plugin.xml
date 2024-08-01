@@ -21,6 +21,11 @@
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
 	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 
+	<!-- Start copying provisioning profile -->
+	<hook type="before_plugin_install" src="scripts/copyAndUnzipProvisioningProfiles.js"/> 
+	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
+	<!-- End copying -->       
+
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
@@ -74,7 +79,7 @@
                 <inherit>search_paths</inherit>
             </target>
         </podspec>
-		
+
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 
 	<preference name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
