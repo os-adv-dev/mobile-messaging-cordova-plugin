@@ -18,22 +18,19 @@
 	</js-module>
 
 	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
-	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
-	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
-
-	<!-- Start copying provisioning profile -->
-	<hook type="before_plugin_install" src="scripts/copyAndUnzipProvisioningProfiles.js"/> 
-	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
-	<!-- End copying -->       
+	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>
+	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>     
 
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
-		
-		<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
-		<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
+	
+	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
+	<hook type="before_plugin_install" src="scripts/copyAndUnzipProvisioningProfiles.js"/> 
+	<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
+	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
