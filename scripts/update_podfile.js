@@ -1,36 +1,56 @@
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 module.exports = function(context) {
-    const projectRoot = context.opts.projectRoot;
-    const podfilePath = path.join(projectRoot, 'platforms', 'ios', 'Podfile');
+    return new Promise((resolve, reject) => {
+        const projectRoot = context.opts.projectRoot;
+        const podfilePath = path.join(projectRoot, 'platforms', 'ios', 'Podfile');
 
-    // Check if Podfile exists
-    if (!fs.existsSync(podfilePath)) {
-        console.error(`🚨 Podfile not found at ${podfilePath}`);
-        return;
-    }
+        // Check if Podfile exists
+        if (!fs.existsSync(podfilePath)) {
+            console.error(`🚨 Podfile not found at ${podfilePath}`);
+            return reject(new Error(`Podfile not found at ${podfilePath}`));
+        }
 
-    try {
-        // Read the existing Podfile
-        let podfileContent = fs.readFileSync(podfilePath, 'utf8');
+        try {
+            // Read the existing Podfile
+            let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
-        // Define the new target block to add
-        const newTargetBlock = `
+            // Define the new target block to add
+            const newTargetBlock = `
   target 'MobileMessagingNotificationExtension' do
       inherit! :search_paths
       pod 'MobileMessaging', '12.6.2'
   end
 `;
 
-        // Insert the new target block before the last 'end'
-        const updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}end`);
+            // Insert the new target block before the last 'end'
+            const updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}end`);
 
-        // Write the updated content back to the Podfile
-        fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');
+            // Write the updated content back to the Podfile
+            fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');
 
-        console.log('✅ Podfile updated successfully!');
-    } catch (error) {
-        console.error(`🚨 Error updating Podfile: ${error.message}`);
-    }
+            console.log('✅ Podfile updated successfully!');
+
+            // Run 'pod install' to update the Pods
+            exec('pod install', { cwd: path.dirname(podfilePath) }, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`🚨 Error running pod install: ${error.message}`);
+                    return reject(new Error(`Error running pod install: ${error.message}`));
+                }
+
+                console.log('✅ pod install completed successfully!');
+                console.log(stdout);
+                if (stderr) {
+                    console.error(stderr);
+                }
+
+                resolve();
+            });
+        } catch (error) {
+            console.error(`🚨 Error updating Podfile: ${error.message}`);
+            reject(new Error(`Error updating Podfile: ${error.message}`));
+        }
+    });
 };
