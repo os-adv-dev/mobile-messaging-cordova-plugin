@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-const plist = require('plist');
 const parseString = require('xml2js').parseString;
 
 function getProjectName() {
@@ -32,49 +31,31 @@ module.exports = function(context) {
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
     
     return waitForFile(completionFilePath).then(() => {
-        const provisioningProfilesPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'provisioning-profiles');
-        
-        // Identify the provisioning profile file
-        const provisioningProfile = fs.readdirSync(provisioningProfilesPath).find(file => file.endsWith('.mobileprovision'));
-        
-        if (!provisioningProfile) {
-            throw new Error('No provisioning profile found in the provisioning-profiles directory.');
+        const projectName = getProjectName();
+
+        const args = process.argv;
+        let provisioningProfileUUID;
+        let provisioningProfileName;
+        for (const arg of args) {  
+            if (arg.includes('IOS_EXTENSION_APP_CODE')) {
+                const stringArray = arg.split("=");
+                provisioningProfileUUID = stringArray.slice(-1).pop();
+            }
+            if (arg.includes('IOS_PP_NAME')) {
+                const stringArray = arg.split("=");
+                provisioningProfileName = stringArray.slice(-1).pop();
+            }
         }
 
-        const provisioningProfilePath = path.join(provisioningProfilesPath, provisioningProfile);
+        if (!(provisioningProfileUUID && provisioningProfileName)) {
+            throw new Error('Provisioning profile UUID or name not provided in command line arguments.');
+        }
 
-        // Extract information from the provisioning profile
-        return new Promise((resolve, reject) => {
-            exec(`security cms -D -i "${provisioningProfilePath}"`, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`🚨 Error extracting provisioning profile information: ${error.message}`);
-                    return reject(new Error(`Error extracting provisioning profile information: ${error.message}`));
-                }
+        // Path to the Ruby script
+        const rubyScriptPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'scripts', 'update_provisioning_profile.rb');
 
-                //const profilePlist = plist.parse(stdout);
-                //const provisioningProfileUUID = profilePlist.UUID;
-                //const provisioningProfileName = profilePlist.Name;
-                const projectName = getProjectName();
-
-                const args = process.argv
-                var provisioningProfileUUID;
-                var provisioningProfileName;
-                for (const arg of args) {  
-                  if (arg.includes('IOS_EXTENSION_APP_CODE')){
-                    var stringArray = arg.split("=");
-                    provisioningProfileUUID = stringArray.slice(-1).pop();
-                  }
-                  if (arg.includes('IOS_PP_NAME')){
-                    var stringArray = arg.split("=");
-                    provisioningProfileName = stringArray.slice(-1).pop();
-                  }
-                }
-
-                // Path to the Ruby script
-                const rubyScriptPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'scripts', 'update_provisioning_profile.rb');
-
-                // Update the Ruby script with the extracted information
-                const rubyScriptContent = `
+        // Update the Ruby script with the extracted information
+        const rubyScriptContent = `
 require 'xcodeproj'
 
 begin
@@ -127,35 +108,35 @@ rescue => e
 end
 `;
 
-                // Write the updated Ruby script
-                fs.writeFileSync(rubyScriptPath, rubyScriptContent, 'utf8');
+        // Write the updated Ruby script
+        fs.writeFileSync(rubyScriptPath, rubyScriptContent, 'utf8');
 
-                console.log('✅ Ruby script updated successfully!');
+        console.log('✅ Ruby script updated successfully!');
 
-                // Define environment variables if needed
-                const env = Object.create(process.env);
-                env.GEM_HOME = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems');
+        // Define environment variables if needed
+        const env = Object.create(process.env);
+        env.GEM_HOME = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems');
 
-                // Path to the xcodeproj binary
-                const xcodeprojBinPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems', 'bin', 'xcodeproj');
+        // Path to the xcodeproj binary
+        const xcodeprojBinPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems', 'bin', 'xcodeproj');
 
-                // Run the Ruby script using the existing xcodeproj binary
-                exec(`ruby ${rubyScriptPath}`, { env: env }, (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`🚨 Error running Ruby script: ${error.message}`);
-                        console.error(`stderr: ${stderr}`);
-                        console.error(`stdout: ${stdout}`);
-                        return reject(new Error(`Error running Ruby script: ${error.message}`));
-                    }
+        // Run the Ruby script using the existing xcodeproj binary
+        return new Promise((resolve, reject) => {
+            exec(`ruby ${rubyScriptPath}`, { env: env }, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`🚨 Error running Ruby script: ${error.message}`);
+                    console.error(`stderr: ${stderr}`);
+                    console.error(`stdout: ${stdout}`);
+                    return reject(new Error(`Error running Ruby script: ${error.message}`));
+                }
 
-                    console.log('✅ Ruby script completed successfully!');
-                    console.log(stdout);
-                    if (stderr) {
-                        console.error(stderr);
-                    }
+                console.log('✅ Ruby script completed successfully!');
+                console.log(stdout);
+                if (stderr) {
+                    console.error(stderr);
+                }
 
-                    resolve();
-                });
+                resolve();
             });
         });
     });
