@@ -28,10 +28,11 @@
 	<platform name="ios">
 	
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
-	<hook type="after_prepare" src="scripts/update_podfile.js"/>
 	<hook type="before_plugin_install" src="scripts/copyAndUnzipProvisioningProfiles.js"/> 
 	<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
+	<hook type="after_plugin_install" src="hooks/ios/update_provisioning_profile.js"/>
 	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
+	<hook type="after_prepare" src="scripts/update_podfile.js"/>
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
