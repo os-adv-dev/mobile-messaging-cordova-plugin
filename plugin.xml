@@ -28,6 +28,7 @@
 	<platform name="ios">
 	
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
+	<hook type="before_plugin_install" src="scripts/update_podfile.js"/>
 	<hook type="before_plugin_install" src="scripts/copyAndUnzipProvisioningProfiles.js"/> 
 	<hook type="after_plugin_install" src="scripts/integrate_notification_extension.js"/>
 	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
@@ -62,18 +63,13 @@
 		</config-file>
 
 		<podspec>
-		    <pods use-frameworks="true">
-		        <pod name="MobileMessaging" spec="12.6.2" />
-		        <pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-		        <pod name="MobileMessaging/InAppChat" spec="12.6.2" />
-		        <pod name="MobileMessaging/Inbox" spec="12.6.2" />
-		    </pods>
-		    <target name="MobileMessagingNotificationExtension">
-		        <inherit>search_paths</inherit>
-		        <pods>
-		            <pod name="MobileMessaging" spec="12.6.2" />
-		        </pods>
-		    </target>
+			<pods use-frameworks="true">
+				<pod name="MobileMessaging" spec="12.6.2" />
+				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
+				<pod name="MobileMessaging/InAppChat" spec="12.6.2" />
+				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
+				<pod name="MobileMessaging/Inbox" spec="12.6.2" />
+			</pods>
 		</podspec>
 
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
