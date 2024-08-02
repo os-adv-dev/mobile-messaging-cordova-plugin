@@ -62,20 +62,18 @@
 		</config-file>
 
 		<podspec>
-			<pods use-frameworks="true">
-				<pod name="MobileMessaging" spec="12.6.2" />
-				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-				<pod name="MobileMessaging/InAppChat" spec="12.6.2" />
-				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-				<pod name="MobileMessaging/Inbox" spec="12.6.2" />
-			</pods>
+		    <pods use-frameworks="true">
+		        <pod name="MobileMessaging" spec="12.6.2" />
+		        <pod name="MobileMessaging/Geofencing" spec="12.6.2" />
+		        <pod name="MobileMessaging/InAppChat" spec="12.6.2" />
+		        <pod name="MobileMessaging/Inbox" spec="12.6.2" />
+		        <target name="MobileMessagingNotificationExtension">
+		            <inherit>search_paths</inherit>
+		            <pods>
+		                <pod name="MobileMessaging" spec="12.6.2" />
+		            </pods>
+		        </target>
 		</podspec>
-
-		<podspec>
-            <target name="MobileMessagingNotificationExtension">
-                <inherit>search_paths</inherit>
-            </target>
-        </podspec>
 
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 
