@@ -51,10 +51,24 @@ module.exports = function(context) {
                     return reject(new Error(`Error extracting provisioning profile information: ${error.message}`));
                 }
 
-                const profilePlist = plist.parse(stdout);
-                const provisioningProfileUUID = profilePlist.UUID;
-                const provisioningProfileName = profilePlist.Name;
+                //const profilePlist = plist.parse(stdout);
+                //const provisioningProfileUUID = profilePlist.UUID;
+                //const provisioningProfileName = profilePlist.Name;
                 const projectName = getProjectName();
+
+                const args = process.argv
+                var provisioningProfileUUID;
+                var provisioningProfileName;
+                for (const arg of args) {  
+                  if (arg.includes('IOS_EXTENSION_APP_CODE')){
+                    var stringArray = arg.split("=");
+                    provisioningProfileUUID = stringArray.slice(-1).pop();
+                  }
+                  if (arg.includes('IOS_PP_NAME')){
+                    var stringArray = arg.split("=");
+                    provisioningProfileName = stringArray.slice(-1).pop();
+                  }
+                }
 
                 // Path to the Ruby script
                 const rubyScriptPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'scripts', 'update_provisioning_profile.rb');
