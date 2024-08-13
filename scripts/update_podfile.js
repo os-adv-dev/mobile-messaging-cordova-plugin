@@ -21,7 +21,7 @@ module.exports = function(context) {
             const newTargetBlock = `
   target 'MobileMessagingNotificationExtension' do
       inherit! :search_paths
-      pod 'MobileMessaging', '12.6.2'
+      #pod 'MobileMessaging', '12.6.2'
   end
 `;
 
