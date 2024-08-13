@@ -29,26 +29,23 @@ function waitForFile(filePath, interval = 1000) {
 module.exports = function(context) {
     const projectRoot = context.opts.projectRoot;
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
+    const jsonFilePath = path.join(projectRoot, 'provisioning_info.json');
     
     return waitForFile(completionFilePath).then(() => {
         const projectName = getProjectName();
 
-        const args = process.argv;
-        let provisioningProfileUUID;
-        let provisioningProfileName;
-        for (const arg of args) {  
-            if (arg.includes('IOS_EXTENSION_APP_CODE')) {
-                const stringArray = arg.split("=");
-                provisioningProfileUUID = stringArray.slice(-1).pop();
-            }
-            if (arg.includes('IOS_PP_NAME')) {
-                const stringArray = arg.split("=");
-                provisioningProfileName = stringArray.slice(-1).pop();
-            }
+        // Check if the JSON file exists
+        if (!fs.existsSync(jsonFilePath)) {
+            throw new Error(`Provisioning info JSON file not found at ${jsonFilePath}`);
         }
 
-        if (!(provisioningProfileUUID && provisioningProfileName)) {
-            throw new Error('Provisioning profile UUID or name not provided in command line arguments.');
+        // Read the JSON file
+        const provisioningInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+
+        const { provisioningProfileUUID, provisioningProfileName, teamID } = provisioningInfo;
+
+        if (!(provisioningProfileUUID && provisioningProfileName && teamID)) {
+            throw new Error('Provisioning profile UUID, name, or team ID not found in JSON file.');
         }
 
         // Path to the Ruby script
@@ -68,8 +65,11 @@ begin
   # The UUID of the provisioning profile to assign
   provisioning_profile_uuid = '${provisioningProfileUUID}'
 
-  # The name of the provisioning profile (from the plist content)
+  # The name of the provisioning profile
   provisioning_profile_name = '${provisioningProfileName}'
+
+  # The development team ID
+  development_team = '${teamID}'
 
   puts "Opening project: #{project_path}"
   project = Xcodeproj::Project.open(project_path)
@@ -94,6 +94,8 @@ begin
     config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = provisioning_profile_name
     config.build_settings['PROVISIONING_PROFILE'] = provisioning_profile_uuid
     config.build_settings['CODE_SIGN_IDENTITY'] = 'iPhone Developer'
+    config.build_settings['DEVELOPMENT_TEAM'] = development_team
+    config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
   end
 
   puts "Saving project"
