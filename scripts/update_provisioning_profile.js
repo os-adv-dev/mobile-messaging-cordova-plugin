@@ -1,3 +1,31 @@
+const fs = require('fs');
+const path = require('path');  // Ensure the 'path' module is imported
+const { exec } = require('child_process');
+const parseString = require('xml2js').parseString;
+
+function getProjectName() {
+    const config = fs.readFileSync('config.xml').toString();
+    let name;
+    parseString(config, function (err, result) {
+        if (err) {
+            throw new Error(`Error parsing config.xml: ${err.message}`);
+        }
+        name = result.widget.name[0].trim();
+    });
+    return name || null;
+}
+
+function waitForFile(filePath, interval = 1000) {
+    return new Promise((resolve) => {
+        const intervalId = setInterval(() => {
+            if (fs.existsSync(filePath)) {
+                clearInterval(intervalId);
+                resolve();
+            }
+        }, interval);
+    });
+}
+
 module.exports = function(context) {
     const projectRoot = context.opts.projectRoot;
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
