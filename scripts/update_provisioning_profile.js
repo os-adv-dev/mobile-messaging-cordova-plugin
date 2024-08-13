@@ -1,31 +1,3 @@
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const parseString = require('xml2js').parseString;
-
-function getProjectName() {
-    const config = fs.readFileSync('config.xml').toString();
-    let name;
-    parseString(config, function (err, result) {
-        if (err) {
-            throw new Error(`Error parsing config.xml: ${err.message}`);
-        }
-        name = result.widget.name[0].trim();
-    });
-    return name || null;
-}
-
-function waitForFile(filePath, interval = 1000) {
-    return new Promise((resolve) => {
-        const intervalId = setInterval(() => {
-            if (fs.existsSync(filePath)) {
-                clearInterval(intervalId);
-                resolve();
-            }
-        }, interval);
-    });
-}
-
 module.exports = function(context) {
     const projectRoot = context.opts.projectRoot;
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
@@ -119,12 +91,12 @@ end
         const env = Object.create(process.env);
         env.GEM_HOME = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems');
 
-        // Path to the xcodeproj binary
-        const xcodeprojBinPath = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'gems', 'bin', 'xcodeproj');
+        // Escape the file path by wrapping it in quotes
+        const escapedRubyScriptPath = `"${rubyScriptPath}"`;
 
         // Run the Ruby script using the existing xcodeproj binary
         return new Promise((resolve, reject) => {
-            exec(`ruby ${rubyScriptPath}`, { env: env }, (error, stdout, stderr) => {
+            exec(`ruby ${escapedRubyScriptPath}`, { env: env }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`🚨 Error running Ruby script: ${error.message}`);
                     console.error(`stderr: ${stderr}`);
