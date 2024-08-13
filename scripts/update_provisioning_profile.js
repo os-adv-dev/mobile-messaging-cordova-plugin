@@ -83,12 +83,10 @@ begin
   puts "Finding target: #{target_name}"
   target = project.targets.find { |t| t.name == target_name }
 
-  if target.nil? 
-  {
-    throw new Error(`Target '${target_name}' not found in project.`);
-  }
-
-  console.log(`Target '${target_name}' found successfully`);
+  if target.nil? then
+    puts "Target '#{target_name}' not found in project."
+    exit 1
+  end
 
   puts "Updating build settings for each build configuration"
   target.build_configurations.each do |config|
@@ -102,12 +100,12 @@ begin
 
   puts "Saving project"
   project.save
-  console.log("Project saved successfully")
+  puts "Project saved successfully"
 
-  console.log("Successfully updated provisioning profile for target '#{target_name}'.")
+  puts "Successfully updated provisioning profile for target '#{target_name}'."
 rescue => e
-  console.log("An error occurred: #{e.message}")
-  console.log(e.backtrace.join("\n"))
+  puts "An error occurred: #{e.message}"
+  puts e.backtrace.join("\\n")
   exit 1
 end
 `;
