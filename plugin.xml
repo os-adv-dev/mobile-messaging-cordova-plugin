@@ -25,6 +25,8 @@
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
+	
+	<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 
 	<platform name="ios">
 		<hook type="before_plugin_install" src="scripts/build_mobile_messaging_framework.sh"/>
@@ -61,7 +63,7 @@
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 	</platform>
 
-	<platform name="android">
+	<platform name="android">		
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
 				<param name="android-package" value="org.apache.cordova.plugin.MobileMessagingCordova"/>
