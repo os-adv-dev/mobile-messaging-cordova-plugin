@@ -3,6 +3,8 @@ package org.apache.cordova.plugin;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,7 +21,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -112,6 +116,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
     private static final String FUNCTION_DEPERSONALIZE = "depersonalize";
     private static final String FUNCTION_DEPERSONALIZE_INSTALLATION = "depersonalizeInstallation";
     private static final String FUNCTION_SET_INSTALLATION_AS_PRIMARY = "setInstallationAsPrimary";
+    private static final String FUNCTION_CHECK_PERMISSIONS = "checkPermissions";
 
     private static final String FUNCTION_SHOW_DIALOG_FOR_ERROR = "showDialogForError";
     private static final String FUNCTION_MARK_MESSAGES_SEEN = "markMessagesSeen";
@@ -476,11 +481,42 @@ public class MobileMessagingCordova extends CordovaPlugin {
         } else if (FUNCTION_MOBILE_INBOX_SET_SEEN.equals(action)) {
             setInboxMessagesSeen(args, callbackContext);
             return true;
+        } else if(FUNCTION_CHECK_PERMISSIONS.equals(action)) {
+            this.checkPermissions(callbackContext);
+            return true;
         }
 
         return false;
     }
 
+    private void checkPermissions(final CallbackContext callbackContext) {
+        Context context = this.cordova.getActivity().getApplicationContext();
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+
+        boolean isEnabled = notificationManagerCompat.areNotificationsEnabled();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            isEnabled = isEnabled && areChannelsEnabled(notificationManagerCompat);
+        }
+
+        if (isEnabled) {
+            callbackContext.success("Notifications are enabled");
+        } else {
+            callbackContext.error("Notifications are disabled");
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private boolean areChannelsEnabled(NotificationManagerCompat notificationManagerCompat) {
+        NotificationManager notificationManager = (NotificationManager) this.cordova.getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager != null) {
+            for (NotificationChannel channel : notificationManager.getNotificationChannels()) {
+                if (channel.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     private void init(JSONArray args, final CallbackContext callbackContext) throws JSONException {
         final Configuration configuration = resolveConfiguration(args);
@@ -576,6 +612,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                     sendCallbackSuccessKeepCallback(callbackContext);
                 }
             }
+
 
             @Override
             public void onError(InternalSdkError e, @Nullable Integer googleErrorCode) {
