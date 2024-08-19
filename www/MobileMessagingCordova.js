@@ -612,5 +612,16 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
     }, 'MobileMessagingCordova', 'registerForAndroidRemoteNotifications', []);
 }
 
+/**
+ * Check permissions on user device
+ *
+ * @name checkPermissions
+ * @param {Function} callback will be called with fetched user data on success
+ * @param {Function} errorCallback will be called on error
+ */
+MobileMessagingCordova.prototype.checkPermissions = function (callback, errorCallback) {
+    cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'checkPermissions', [])
+};
+
 MobileMessaging = new MobileMessagingCordova();
 module.exports = MobileMessaging;
