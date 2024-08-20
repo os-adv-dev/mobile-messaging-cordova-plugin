@@ -85,7 +85,7 @@ var MobileMessagingCordova = function () {
  *  }
  * @param {Function} onInitError. Error callback
  */
-MobileMessagingCordova.prototype.init = function (config, onInitError) {
+MobileMessagingCordova.prototype.init = function (config, onSuccess, onInitError) {
     var messageStorage = config.messageStorage;
     var _onInitErrorHandler = onInitError || function () {
     };
@@ -136,8 +136,7 @@ MobileMessagingCordova.prototype.init = function (config, onInitError) {
 
     cordova.exec(execEventHandlerIfExists, function () {
     }, 'MobileMessagingCordova', 'registerReceiver', [supportedEvents]);
-    cordova.exec(function () {
-    }, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
+    cordova.exec(onSuccess, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
 };
 
 /**
