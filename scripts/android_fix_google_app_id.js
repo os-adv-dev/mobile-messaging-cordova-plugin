@@ -18,27 +18,41 @@ module.exports = function(ctx) {
         return;
     }
 
-    var args = process.argv.slice(2);
-    var hmsBuild = args.includes("--hms");
+    updateConfig("HUAWEI_SENDER_ID", "app_id");
+    var hmsBuild = true;
     if (hmsBuild) {
         console.log("HMS enabled. Start checking app_id");
         return updateConfig("HUAWEI_SENDER_ID", "app_id");
     }
 
     function updateConfig(appIdParamName, configParamName) {
+        
+        const projectRoot = ctx.opts.projectRoot;
+        const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+        console.log(" ✅ -- get file huawei info to build: "+jsonFilePath);
 
-        var ConfigParser = ctx.requireCordovaModule('cordova-common').ConfigParser;
-        var pluginConfig = new ConfigParser('config.xml').getPlugin(ctx.opts.plugin.id);
+        // Check if the Huawei JSON file exists
+        if (!fs.existsSync(jsonFilePath)) {
+            throw new Error(`HUAWEI file info JSON file not found at ${jsonFilePath}`);
+        }
 
-        if (pluginConfig === undefined) {
+        // Read the JSON file
+        const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+
+        const { huaweiSenderId } = huaweiInfo;
+        console.log(" ✅ -- after read Json file huaweiSenderId: "+huaweiSenderId);
+
+        if (huaweiSenderId === undefined) {
             console.log("ERROR: Missing plugin variables. It's required to provide '" + appIdParamName + "'");
             console.log('-----------------------------');
             return;
         }
+        
+        var providedStringsXmlPath = ctx.opts.options.ANDROID_STRINGS_XML_RELATIVE_PATH;
+        console.log(" ✅ -- providedStringsXmlPath: "+providedStringsXmlPath);
 
-        var variables = pluginConfig.variables;
-        var providedStringsXmlPath = ctx.opts.options.ANDROID_STRINGS_XML_RELATIVE_PATH || variables.ANDROID_STRINGS_XML_RELATIVE_PATH;
-        var appId = ctx.opts.options[appIdParamName] || variables[appIdParamName];
+        var appId = huaweiSenderId;
+        console.log("-- ✅ -- appId: "+appId);
         if (!appId) {
             console.log("ERROR: '" + appIdParamName + "' not defined");
             console.log('-----------------------------');

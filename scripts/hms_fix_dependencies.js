@@ -11,8 +11,8 @@ module.exports = function(ctx) {
         return;
     }
 
-    var args = process.argv.slice(2);
-    var hmsBuild = args.includes("--hms");
+   // var args = process.argv.slice(2);
+    var hmsBuild = true;
     console.log("HMS Build:  " + hmsBuild);
 
     function updateIsHmsBuild(isHmsBuild) {

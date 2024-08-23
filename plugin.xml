@@ -18,7 +18,6 @@
 		<clobbers target="mobileMessaging" />
 	</js-module>
 
-	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
 	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>     
 
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
@@ -83,7 +82,13 @@
 	</platform> -->
 
 	<platform name="android">
+		
+		<!-- Add Huawei Dependencies -->
+		<hook type="before_build" src="scripts/huawei_add_extra_dependencies.js"/>
+		<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
+		<hook type="before_plugin_install" src="scripts/save_json_info_huawei.js" />
+
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
 				<param name="android-package" value="org.apache.cordova.plugin.MobileMessagingCordova"/>
