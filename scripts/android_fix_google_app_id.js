@@ -18,15 +18,18 @@ module.exports = function(ctx) {
         return;
     }
 
-    updateConfig("HUAWEI_SENDER_ID", "app_id");
-    var hmsBuild = true;
+    var args = process.argv.slice(2);
+    var hmsBuild = args.includes("--hms");
     if (hmsBuild) {
         console.log("HMS enabled. Start checking app_id");
         return updateConfig("HUAWEI_SENDER_ID", "app_id");
     }
 
     function updateConfig(appIdParamName, configParamName) {
-        
+
+        var ConfigParser = ctx.requireCordovaModule('cordova-common').ConfigParser;
+        var pluginConfig = new ConfigParser('config.xml').getPlugin(ctx.opts.plugin.id);
+
         const projectRoot = ctx.opts.projectRoot;
         const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
         console.log(" ✅ -- get file huawei info to build: "+jsonFilePath);

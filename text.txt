@@ -1,0 +1,44 @@
+mobileMessaging.saveUser(
+{
+    "externalUserId": "1212",
+    "firstName": "Paulo",
+    "lastName": "huawei",
+    "middleName": "PC",
+    "gender": "Male",
+    "birthday": "1996-03-01",
+    "tags": ["Sports", "Food"]
+}, function success(data) { 
+        console.log("success: "+data);},
+    function failed(error) {
+        console.log(JSON.stringify(error, null, '\t'));
+    }
+);
+
+MobileMessaging.init(
+        {
+            applicationCode: 'b9381f6a5f28b656e554ae6d016710f8-8ae3adc1-9a8e-4e04-93b7-05decba5fc20',
+            geofencingEnabled: 'true',
+            ios: {
+                notificationTypes: ['alert', 'badge', 'sound']
+            },
+            android: {
+                notificationIcon: 'ic_launcher',
+                multipleNotifications: 'true',
+                notificationAccentColor: '#cccccc'
+            }
+        },
+        function onSuccess(data) {
+            alert("Success init: " + data);
+
+            MobileMessaging.register('messageReceived',
+                    function(message) {
+                    alert("messageReceived: "+message);
+                        console.log(' --- ✅✅ --- Message Received: ' + message.body);
+                    }
+                );
+
+        },
+        function(error) {
+            alert('Init error: ' + error.description);
+        }
+    );
