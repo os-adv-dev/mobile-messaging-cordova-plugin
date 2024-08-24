@@ -18,7 +18,8 @@
 		<clobbers target="mobileMessaging" />
 	</js-module>
 
-	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>     
+	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>    
+	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/> 
 
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />

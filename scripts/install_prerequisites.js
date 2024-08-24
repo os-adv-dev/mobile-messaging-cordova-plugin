@@ -1,5 +1,5 @@
 
-console.log("Running hook to install NodeJS requirements");
+console.log("---- ✅ --- Running hook to install NodeJS requirements");
 
 module.exports = function (context) {
   var child_process = require('child_process'),
