@@ -6,9 +6,9 @@ module.exports = function(context) {
     const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
 
     const args = process.argv;
-    let huaweiSenderId;
-    let credentials;
-    let webServiceUrl;
+    let huaweiSenderId = "";
+    let credentials = "";
+    let webServiceUrl = "";
     let isBuildHuawei = false;
 
     for (const arg of args) {  
@@ -27,7 +27,7 @@ module.exports = function(context) {
             webServiceUrl = stringArray.slice(-1).pop();
         }
         
-        if (arg.includes('isBuildHuawei')) {
+        if (arg.includes('IS_BUILD_HUAWEI')) {
             const stringArray = arg.split("=");
             isBuildHuawei = stringArray.slice(-1).pop() === 'true';
         }
@@ -36,7 +36,7 @@ module.exports = function(context) {
     console.log("--- ✅ --- Variable HUAWEI_SENDER_ID: "+huaweiSenderId);
     console.log("--- ✅ --- Variable CREDENTIALS: "+credentials);
     console.log("--- ✅ --- Variable WEBSERVICEURL: "+webServiceUrl);
-    console.log("--- ✅ --- Variable isBuildHuawei: " + isBuildHuawei);
+    console.log("--- ✅ --- Variable IS_BUILD_HUAWEI: " + isBuildHuawei);
 
     if (!huaweiSenderId) {
         throw new Error('Huawei info HUAWEI_SENDER_ID not provided in command line arguments.');
