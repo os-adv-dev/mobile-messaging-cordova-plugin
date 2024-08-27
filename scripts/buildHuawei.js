@@ -36,6 +36,9 @@ module.exports = function(context) {
             const platformRoot = path.join(context.opts.projectRoot, 'platforms/android');
             const buildOutputPath = path.join(platformRoot, 'app/build/outputs/apk');
 
+            console.log(`📂 -- The platformRoot: ${platformRoot}`);
+            console.log(`📂 -- The buildOutputPath: ${buildOutputPath}`);
+
             if (fs.existsSync(buildOutputPath)) {
                 console.log(`📂 -- The APK(s) are located at: ${buildOutputPath}`);
 
