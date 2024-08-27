@@ -78,7 +78,6 @@ module.exports = function(context) {
         console.log("✅ -- Successfully sent file: "+response);
     }).catch((error) => {
         console.log("❌ -- Failed to send file: "+error);
-        log(error);
     });
 }
 
