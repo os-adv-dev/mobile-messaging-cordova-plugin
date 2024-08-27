@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 var exec = require('child_process').exec;
 
-module.exports = function(context) {
+module.exports = async function(context) {
     console.log('✅ -- Executing after_compile hook to manage Cordova plugin.');
 
     // Get variables from huawei_info.json file
@@ -19,30 +19,35 @@ module.exports = function(context) {
         return;
     }
 
-    // Command to remove the existing plugin
-    const removePluginCommand = 'cordova plugin remove com-infobip-plugins-mobilemessaging --verbose';
-
-    exec(removePluginCommand, function(error, stdout, stderr) {
-        if (error) {
-            console.error(`❌ -- Error removing plugin: ${error}`);
-            console.error(stderr);
-            return;
-        }
-
-        console.log(`📦 -- Plugin removed successfully: ${stdout}`);
+    try {
+        // Command to remove the existing plugin
+        const removePluginCommand = 'cordova plugin remove com-infobip-plugins-mobilemessaging --verbose';
+        console.log("🔄 -- Removing existing plugin...");
+        await execShellCommand(removePluginCommand);
+        console.log("✅ -- Plugin removed successfully.");
 
         // Command to add the plugin from the specific branch of the Git repository
         const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#and-implementation-huawei --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+        console.log("🔄 -- Adding plugin from specific branch...");
+        await execShellCommand(addPluginCommand);
+        console.log("✅ -- Plugin added successfully.");
 
-        exec(addPluginCommand, function(error, stdout, stderr) {
+    } catch (error) {
+        console.error(`❌ -- Error during plugin management: ${error}`);
+    }
+
+    console.log('✅ -- Plugin management completed.');
+};
+
+function execShellCommand(cmd) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
             if (error) {
-                console.error(`❌ -- Error adding plugin: ${error}`);
                 console.error(stderr);
-                return;
+                reject(`Error: ${error}`);
             }
-
-            console.log(`📦 -- Plugin added successfully: ${stdout}`);
-            console.log('✅ -- Plugin management completed.');
+            console.log(stdout);
+            resolve(stdout);
         });
     });
-};
+}
