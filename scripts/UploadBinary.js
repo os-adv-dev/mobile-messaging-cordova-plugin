@@ -1,89 +1,78 @@
-var axios;
-var base64;
-const path = require("path")
+const path = require("path");
 const fs = require('fs');
+const axios = require('axios');
+const base64 = require('base-64');
 
-module.exports = function(context) {
+module.exports = async function(context) {
+    console.log('🚀 Starting Upload Process');
 
-	if(isCordovaAbove(context,8)){
-        axios = require('axios');
-        base64 = require('base-64');
-	}else{
-        base64 = context.requireCordovaModule('base-64');
-        axios = context.requireCordovaModule('axios');
-	}
+    process.chdir(context.opts.projectRoot);
 
-	process.chdir(context.opts.projectRoot);
-
-    var mode = 'debug';
-	if (context.cmdLine.indexOf('release') >= 0) {
-	    mode = 'release';
-	}
-
-    // get variables form huawei json file
-    const projectRoot = context.opts.projectRoot;
-    const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
-    console.log(" ✅ -- get file huawei info to build: "+jsonFilePath);
-
-    // Check if the Huawei JSON file exists
-    if (!fs.existsSync(jsonFilePath)) {
-        throw new Error(`HUAWEI file info JSON file not found at ${jsonFilePath}`);
+    let mode = 'debug';
+    if (context.cmdLine.indexOf('release') >= 0) {
+        mode = 'release';
     }
 
-    // Read the JSON file
+    const projectRoot = context.opts.projectRoot;
+    const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    console.log("✅ -- Retrieved Huawei info file path: " + jsonFilePath);
+
+    if (!fs.existsSync(jsonFilePath)) {
+        console.error(`❌ -- HUAWEI info JSON file not found at ${jsonFilePath}`);
+        return;
+    }
+
     const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
     const { credentials, webServiceUrl } = huaweiInfo;
 
-    console.log(" ✅ -- after read Json file credentials: "+credentials);
-    console.log(" ✅ -- after read Json file webServiceUrl: "+webServiceUrl);
-
-    var encryptedAuth = credentials;
-
-    if(encryptedAuth.includes(":")){
-        encryptedAuth = "Basic "+base64.encode(encryptedAuth);
-        console.log("✅ -- Ecrypted Auth Encode: "+encryptedAuth);
-    }
-
-    var baseUrl = webServiceUrl;
-    console.log("✅ -- MODE: "+mode);
-    console.log("✅ -- BASE_URL: "+baseUrl);
-    console.log("✅ -- encryptedAuth: "+encryptedAuth);
-
-    var binaryFile;
+    console.log("✅ -- Credentials and WebService URL retrieved from JSON.");
     
-    if(fs.existsSync("platforms/android")){
-        if(mode == "release") {
-            var releaseApp = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
-            console.log("✅ -- APK build type RELEASE: "+releaseApp);
+    let encryptedAuth = credentials.includes(":") ? "Basic " + base64.encode(credentials) : credentials;
+    console.log("✅ -- Encrypted Authorization: " + encryptedAuth);
+
+    let baseUrl = webServiceUrl;
+    let binaryFilePath;
+    
+    if (fs.existsSync("platforms/android")) {
+        if (mode === "release") {
+            binaryFilePath = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
+            console.log("✅ -- APK build type RELEASE: " + binaryFilePath);
             baseUrl += "?type=release&platform=android&name=app-release.apk";
-            binaryFile = fs.readFileSync(releaseApp);
         } else {
-            var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
-            console.log("✅ -- APK build type DEBUG: "+debugFile);
+            binaryFilePath = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
+            console.log("✅ -- APK build type DEBUG: " + binaryFilePath);
             baseUrl += "?type=debug&platform=android&name=app-debug.apk";
-            binaryFile = fs.readFileSync(debugFile);
         }
 
-        console.log("✅ -- baseUrl : "+baseUrl);
+        if (!fs.existsSync(binaryFilePath)) {
+            console.error(`❌ -- APK file not found at ${binaryFilePath}`);
+            return;
+        }
+
+        console.log("✅ -- baseUrl for upload: " + baseUrl);
+
+        try {
+            const binaryFile = fs.readFileSync(binaryFilePath);
+            const response = await axios.post(baseUrl, binaryFile, {
+                headers: {
+                    "Authorization": encryptedAuth,
+                    "Content-Type": "application/octet-stream"
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
+            });
+            console.log("✅ -- Successfully uploaded file. Response: ", response.data);
+        } catch (error) {
+            console.error("❌ -- Failed to upload file. Error: ", error.message || error);
+        }
+    } else {
+        console.error('❌ -- Android platform directory not found.');
     }
+};
 
-    axios.post(baseUrl,binaryFile,{
-        headers:{
-            "Authorization": encryptedAuth,
-            "Content-Type": "application/octet-stream"
-        },
-	maxContentLength: Infinity,
-	maxBodyLength: Infinity
-    }).then((response) => {
-        console.log("✅ -- Successfully sent file: "+response);
-    }).catch((error) => {
-        console.log("❌ -- Failed to send file: "+error);
-    });
-}
-
-function isCordovaAbove (context, version) {
-	var cordovaVersion = context.opts.cordova.version;
-	console.log(cordovaVersion);
-	var sp = cordovaVersion.split('.');
-	return parseInt(sp[0]) >= version;
+function isCordovaAbove(context, version) {
+    const cordovaVersion = context.opts.cordova.version;
+    console.log("🔍 -- Cordova version: " + cordovaVersion);
+    const sp = cordovaVersion.split('.');
+    return parseInt(sp[0]) >= version;
 }
