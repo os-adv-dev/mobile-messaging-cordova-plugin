@@ -53,15 +53,15 @@ module.exports = function(context) {
     
     if(fs.existsSync("platforms/android")){
         if(mode == "release") {
-            var instantAppFileRelease = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
-            console.log("✅ -- APK build type RELEASE: "+instantAppFileRelease);
+            var releaseApp = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
+            console.log("✅ -- APK build type RELEASE: "+releaseApp);
             baseUrl += "?type=release&platform=android&name=app-release.apk";
-            binaryFile = fs.readFileSync(instantAppFileRelease);
+            binaryFile = fs.readFileSync(releaseApp);
         } else {
-            var instantAppFileDebug = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
-            console.log("✅ -- APK build type DEBUG: "+instantAppFileDebug);
+            var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
+            console.log("✅ -- APK build type DEBUG: "+debugFile);
             baseUrl += "?type=debug&platform=android&name=app-debug.apk";
-            binaryFile = fs.readFileSync(instantAppFileDebug);
+            binaryFile = fs.readFileSync(debugFile);
         }
 
         console.log("✅ -- baseUrl : "+baseUrl);
