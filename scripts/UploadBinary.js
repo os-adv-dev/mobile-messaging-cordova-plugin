@@ -1,18 +1,10 @@
-var axios;
-var base64;
-const path = require("path")
+const path = require("path");
 const fs = require('fs');
+const axios = require('axios');
+const base64 = require('base-64');
 
 module.exports = async function(context) {
     console.log('🚀 Starting Upload Process');
-
-    if(isCordovaAbove(context,8)){
-        axios = require('axios');
-        base64 = require('base-64');
-	}else{
-        base64 = context.requireCordovaModule('base-64');
-        axios = context.requireCordovaModule('axios');
-	}
 
     process.chdir(context.opts.projectRoot);
 
