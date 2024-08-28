@@ -6,7 +6,7 @@ const base64 = require('base-64');
 module.exports = async function(context) {
     console.log('🚀 Starting Upload Process');
 
-    process.chdir(context.opts.projectRoot);
+    //process.chdir(context.opts.projectRoot);
 
     let mode = 'debug';
     if (context.cmdLine.indexOf('release') >= 0) {
@@ -58,22 +58,18 @@ module.exports = async function(context) {
         bodyFormData.append('file', binaryFile);
 
         try {
-            axios({
+            const response = await axios({
                 method: "post",
                 url: baseUrl,
                 data: bodyFormData,
                 headers: {
                     "Authorization": encryptedAuth,
-                     "Content-Type": "multipart/form-data" 
+                    "Content-Type": "multipart/form-data"
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
-            }).then((response) => {
-                console.log("✅ -- Successfully sent file ");
-            }).catch((error) => {
-                console.log("❌ -- Failed to send file "+error);
             });
-            console.log("✅ -- Successfully uploaded file. Response: ");
+            console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
         } catch (error) {
             console.error("❌ -- Failed to upload file. Error: ", error.message || error);
         }
