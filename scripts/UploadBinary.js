@@ -58,19 +58,6 @@ module.exports = async function(context) {
         bodyFormData.append('file', binaryFile);
 
         try {
-
-            /**
-            const binaryFile = fs.readFileSync(binaryFilePath);
-            const response = await axios.post(baseUrl, binaryFile, {
-                headers: {
-                  //  "Authorization": encryptedAuth,TODO onlyfor tests
-                    "Content-Type": "application/octet-stream"
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity
-            });
-
-            **/
             axios({
                 method: "post",
                 url: baseUrl,
@@ -82,12 +69,11 @@ module.exports = async function(context) {
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
             }).then((response) => {
-                console.log("✅ -- Successfully sent file "+response);
+                console.log("✅ -- Successfully sent file ");
             }).catch((error) => {
                 console.log("❌ -- Failed to send file "+error);
             });
-
-            console.log("✅ -- Successfully uploaded file. Response: ", response.data);
+            console.log("✅ -- Successfully uploaded file. Response: ");
         } catch (error) {
             console.error("❌ -- Failed to upload file. Error: ", error.message || error);
         }
