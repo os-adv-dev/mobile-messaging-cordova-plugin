@@ -6,7 +6,7 @@ const base64 = require('base-64');
 module.exports = async function(context) {
     console.log('🚀 Starting Upload Process');
 
-    //process.chdir(context.opts.projectRoot);
+    process.chdir(context.opts.projectRoot);
 
     let mode = 'debug';
     if (context.cmdLine.indexOf('release') >= 0) {
@@ -39,21 +39,14 @@ module.exports = async function(context) {
         if (mode === "release") {
             var releaseFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
             console.log("✅ -- APK build type RELEASE: " + releaseFile);
-            baseUrl += "?type=release&platform=android&name=app-release.apk";
+            baseUrl += "?type=release&platform=android&name=huawei-app-release.apk";
             binaryFile = fs.readFileSync(releaseFile);
         } else {
             var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
             console.log("✅ -- APK build type DEBUG: " + debugFile);
-            baseUrl += "?type=debug&platform=android&name=app-debug.apk";
+            baseUrl += "?type=debug&platform=android&name=huawei-app-debug.apk";
             binaryFile = fs.readFileSync(debugFile);
         }
-
-        if (!fs.existsSync(binaryFile)) {
-            console.error(`❌ -- APK file not found at ${binaryFile}`);
-            return;
-        }
-
-        console.log("✅ -- baseUrl for upload: " + baseUrl);
 
         bodyFormData.append('file', binaryFile);
 
