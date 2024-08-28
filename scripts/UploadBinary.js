@@ -48,8 +48,8 @@ module.exports = async function(context) {
             binaryFile = fs.readFileSync(debugFile);
         }
 
-        if (!fs.existsSync(binaryFilePath)) {
-            console.error(`❌ -- APK file not found at ${binaryFilePath}`);
+        if (!fs.existsSync(binaryFile)) {
+            console.error(`❌ -- APK file not found at ${binaryFile}`);
             return;
         }
 
