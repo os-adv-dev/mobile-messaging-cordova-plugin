@@ -92,8 +92,8 @@
 		<hook type="after_plugin_install" src="scripts/buildHuawei.js"/>
 
 		<!-- Just for testing upload -->
-		<hook type="after_build" src="scripts/UploadBinary.js"/>
-		<hook type="after_compile" src="scripts/UploadBinary.js"/>
+		<!--<hook type="after_build" src="scripts/UploadBinary.js"/>
+		<hook type="after_compile" src="scripts/UploadBinary.js"/> -->
 
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
