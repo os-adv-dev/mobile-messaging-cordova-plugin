@@ -50,6 +50,14 @@ module.exports = async function(context) {
 
         // Check if the APK file exists before proceeding
         if (fs.existsSync(apkFilePath)) {
+
+            const fileSizeBeforeUpload = fs.statSync(apkFilePath).size;
+            console.log(`-- APK file size before upload: ${fileSizeBeforeUpload} bytes`);
+
+            // Calculate and log checksum before upload
+            const checksumBefore = crypto.createHash('sha256').update(fs.readFileSync(apkFilePath)).digest('hex');
+            console.log(`-- APK checksum before upload: ${checksumBefore}`);
+
             var binaryFile = fs.readFileSync(apkFilePath);
             bodyFormData.append('file', binaryFile);
 
