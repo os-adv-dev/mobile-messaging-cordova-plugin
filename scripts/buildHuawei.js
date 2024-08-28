@@ -41,13 +41,13 @@ module.exports = function(context) {
                 console.log(`📂 -- The APK(s) are located at: ${buildOutputPath}`);
 
                 // Assuming successful completion, execute the module function
-               /** var afterBuildModulePath = path.join(__dirname, 'UploadBinary.js');
+                var afterBuildModulePath = path.join(__dirname, 'UploadBinary.js');
                 if (fs.existsSync(afterBuildModulePath)) {
                     var afterBuildFunction = require(afterBuildModulePath);
                     afterBuildFunction(context);
                 } else {
                     console.error('❌ --- UploadBinary.js script not found.');
-                } */
+                }
 
             } else {
                 console.warn('⚠️ -- Could not locate the APK build output directory.');
