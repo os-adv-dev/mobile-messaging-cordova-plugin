@@ -31,17 +31,21 @@ module.exports = async function(context) {
     console.log("✅ -- Encrypted Authorization: " + encryptedAuth);
 
     let baseUrl = webServiceUrl;
-    let binaryFilePath;
+
+    var bodyFormData = new FormData();
+    var binaryFile;
     
     if (fs.existsSync("platforms/android")) {
         if (mode === "release") {
-            binaryFilePath = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
-            console.log("✅ -- APK build type RELEASE: " + binaryFilePath);
+            var releaseFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
+            console.log("✅ -- APK build type RELEASE: " + releaseFile);
             baseUrl += "?type=release&platform=android&name=app-release.apk";
+            binaryFile = fs.readFileSync(releaseFile);
         } else {
-            binaryFilePath = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
-            console.log("✅ -- APK build type DEBUG: " + binaryFilePath);
+            var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
+            console.log("✅ -- APK build type DEBUG: " + debugFile);
             baseUrl += "?type=debug&platform=android&name=app-debug.apk";
+            binaryFile = fs.readFileSync(debugFile);
         }
 
         if (!fs.existsSync(binaryFilePath)) {
@@ -51,16 +55,38 @@ module.exports = async function(context) {
 
         console.log("✅ -- baseUrl for upload: " + baseUrl);
 
+        bodyFormData.append('file', binaryFile);
+
         try {
+
+            /**
             const binaryFile = fs.readFileSync(binaryFilePath);
             const response = await axios.post(baseUrl, binaryFile, {
                 headers: {
-                    "Authorization": encryptedAuth,
+                  //  "Authorization": encryptedAuth,TODO onlyfor tests
                     "Content-Type": "application/octet-stream"
                 },
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity
             });
+
+            **/
+            axios({
+                method: "post",
+                url: baseUrl,
+                data: bodyFormData,
+                headers: {
+                    "Authorization": encryptedAuth,
+                     "Content-Type": "multipart/form-data" 
+                },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity
+            }).then((response) => {
+                console.log("✅ -- Successfully sent file "+response);
+            }).catch((error) => {
+                console.log("❌ -- Failed to send file "+error);
+            });
+
             console.log("✅ -- Successfully uploaded file. Response: ", response.data);
         } catch (error) {
             console.error("❌ -- Failed to upload file. Error: ", error.message || error);
