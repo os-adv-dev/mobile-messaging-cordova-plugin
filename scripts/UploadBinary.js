@@ -64,7 +64,8 @@ module.exports = async function(context) {
             });
             console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
         } catch (error) {
-            console.error("❌ -- Failed to upload file. Error: ", error.message || error);
+            console.error("❌ -- Failed to upload file. Error: ",error);
+            console.error("❌ -- Failed to upload file. Error Message: ", error.message);
         }
     } else {
         console.error('❌ -- Android platform directory not found.');
