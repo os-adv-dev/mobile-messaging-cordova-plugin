@@ -1,10 +1,18 @@
-const path = require("path");
+var axios;
+var base64;
+const path = require("path")
 const fs = require('fs');
-const axios = require('axios');
-const base64 = require('base-64');
 
 module.exports = async function(context) {
     console.log('🚀 Starting Upload Process');
+
+    if(isCordovaAbove(context,8)){
+        axios = require('axios');
+        base64 = require('base-64');
+	}else{
+        base64 = context.requireCordovaModule('base-64');
+        axios = context.requireCordovaModule('axios');
+	}
 
     process.chdir(context.opts.projectRoot);
 
@@ -39,12 +47,12 @@ module.exports = async function(context) {
         if (mode === "release") {
             var releaseFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
             console.log("✅ -- APK build type RELEASE: " + releaseFile);
-            baseUrl += "?type=release&platform=android&name=huawei-app-release.apk";
+            baseUrl += "?type=release&platform=android&name=app-release.apk";
             binaryFile = fs.readFileSync(releaseFile);
         } else {
             var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
             console.log("✅ -- APK build type DEBUG: " + debugFile);
-            baseUrl += "?type=debug&platform=android&name=huawei-app-debug.apk";
+            baseUrl += "?type=debug&platform=android&name=app-debug.apk";
             binaryFile = fs.readFileSync(debugFile);
         }
 
