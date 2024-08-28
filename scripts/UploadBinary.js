@@ -32,40 +32,46 @@ module.exports = async function(context) {
 
     let baseUrl = webServiceUrl;
 
-    var bodyFormData = new FormData();
-    var binaryFile;
+    const androidOutputDir = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk');
     
-    if (fs.existsSync("platforms/android")) {
+    if (fs.existsSync(androidOutputDir)) {
+        let apkFilePath;
         if (mode === "release") {
-            var releaseFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/release/app-release.apk');
-            console.log("✅ -- APK build type RELEASE: " + releaseFile);
+            apkFilePath = path.join(androidOutputDir, 'release/app-release.apk');
+            console.log("✅ -- APK build type RELEASE: " + apkFilePath);
             baseUrl += "?type=release&platform=android&name=app-release.apk";
-            binaryFile = fs.readFileSync(releaseFile);
         } else {
-            var debugFile = path.join(context.opts.projectRoot, 'platforms/android/app/build/outputs/apk/debug/app-debug.apk');
-            console.log("✅ -- APK build type DEBUG: " + debugFile);
+            apkFilePath = path.join(androidOutputDir, 'debug/app-debug.apk');
+            console.log("✅ -- APK build type DEBUG: " + apkFilePath);
             baseUrl += "?type=debug&platform=android&name=app-debug.apk";
-            binaryFile = fs.readFileSync(debugFile);
         }
 
-        bodyFormData.append('file', binaryFile);
+        var bodyFormData = new FormData();
 
-        try {
-            const response = await axios({
-                method: "post",
-                url: baseUrl,
-                data: bodyFormData,
-                headers: {
-                    "Authorization": encryptedAuth,
-                    "Content-Type": "multipart/form-data"
-                },
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity
-            });
-            console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
-        } catch (error) {
-            console.error("❌ -- Failed to upload file. Error: ",error);
-            console.error("❌ -- Failed to upload file. Error Message: ", error.message);
+        // Check if the APK file exists before proceeding
+        if (fs.existsSync(apkFilePath)) {
+            var binaryFile = fs.readFileSync(apkFilePath);
+            bodyFormData.append('file', binaryFile);
+
+            try {
+                const response = await axios({
+                    method: "post",
+                    url: baseUrl,
+                    data: bodyFormData,
+                    headers: {
+                        "Authorization": encryptedAuth,
+                        "Content-Type": "multipart/form-data"
+                    },
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity
+                });
+                console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
+            } catch (error) {
+                console.error("❌ -- Failed to upload file. Error: ", error);
+                console.error("❌ -- Failed to upload file. Error Message: ", error.message);
+            }
+        } else {
+            console.error(`❌ -- APK file not found at ${apkFilePath}`);
         }
     } else {
         console.error('❌ -- Android platform directory not found.');
