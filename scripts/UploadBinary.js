@@ -3,7 +3,7 @@ const fs = require('fs');
 const axios = require('axios');
 const base64 = require('base-64');
 
-module.exports = async function(context) {
+module.exports = function(context) {
     console.log('🚀 Starting Upload Process');
 
     process.chdir(context.opts.projectRoot);
@@ -58,22 +58,26 @@ module.exports = async function(context) {
             const checksumBefore = crypto.createHash('sha256').update(fs.readFileSync(apkFilePath)).digest('hex');
             console.log(`-- APK checksum before upload: ${checksumBefore}`);
 
-            var binaryFile = fs.readFileSync(apkFilePath);
+            var binaryFile = fs.createReadStream(apkFilePath);
             bodyFormData.append('file', binaryFile);
 
             try {
-                const response = await axios({
+                axios({
                     method: "post",
                     url: baseUrl,
                     data: bodyFormData,
                     headers: {
                         "Authorization": encryptedAuth,
-                        "Content-Type": "multipart/form-data"
+                         "Content-Type": "application/octet-stream"
                     },
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity
+                }).then((response) => {
+                    console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
+                }).catch((error) => {
+                    console.log("❌ -- Failed to send file "+error);
+                    console.log("❌ -- Failed to send file "+error.message);
                 });
-                console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
             } catch (error) {
                 console.error("❌ -- Failed to upload file. Error: ", error);
                 console.error("❌ -- Failed to upload file. Error Message: ", error.message);
