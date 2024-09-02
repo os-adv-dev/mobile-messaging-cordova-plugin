@@ -36,7 +36,7 @@
 	<hook type="after_prepare" src="scripts/update_provisioning_profile.js"/>
 	<hook type="after_prepare" src="scripts/copyProvisioningProfiles.js"/>
 	<hook type="after_prepare" src="scripts/update_podfile.js"/>
-	<hook type="after_prepare" src="scripts/editXcodeProj.js" />
+	<!--<hook type="after_prepare" src="scripts/editXcodeProj.js" /> -->
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
