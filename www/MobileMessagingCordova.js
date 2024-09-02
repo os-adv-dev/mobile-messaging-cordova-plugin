@@ -85,7 +85,7 @@ var MobileMessagingCordova = function () {
  *  }
  * @param {Function} onInitError. Error callback
  */
-MobileMessagingCordova.prototype.init = function (config, onInitError) {
+MobileMessagingCordova.prototype.init = function (config, onSuccess, onInitError) {
     var messageStorage = config.messageStorage;
     var _onInitErrorHandler = onInitError || function () {
     };
@@ -136,8 +136,7 @@ MobileMessagingCordova.prototype.init = function (config, onInitError) {
 
     cordova.exec(execEventHandlerIfExists, function () {
     }, 'MobileMessagingCordova', 'registerReceiver', [supportedEvents]);
-    cordova.exec(function () {
-    }, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
+    cordova.exec(onSuccess, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
 };
 
 /**
@@ -611,6 +610,17 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
     }, function () {
     }, 'MobileMessagingCordova', 'registerForAndroidRemoteNotifications', []);
 }
+
+/**
+ * Check permissions on user device
+ *
+ * @name checkPermissions
+ * @param {Function} callback will be called with fetched user data on success
+ * @param {Function} errorCallback will be called on error
+ */
+MobileMessagingCordova.prototype.checkPermissions = function (callback, errorCallback) {
+    cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'checkPermissions', [])
+};
 
 MobileMessaging = new MobileMessagingCordova();
 module.exports = MobileMessaging;
