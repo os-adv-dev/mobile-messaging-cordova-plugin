@@ -52,7 +52,6 @@ module.exports = function(context) {
         if (fs.existsSync(apkFilePath)) {
 
             console.log(`-- ✅ APK file exists --- `);
-            console.log(`-- APK checksum before upload: ${checksumBefore}`);
 
            // var binaryFile = fs.createReadStream(apkFilePath);
            // bodyFormData.append('file', binaryFile);
