@@ -53,18 +53,17 @@ module.exports = function(context) {
 
             console.log(`-- ✅ APK file exists --- `);
 
-           // var binaryFile = fs.createReadStream(apkFilePath);
-           // bodyFormData.append('file', binaryFile);
+            var binaryFile = fs.createReadStream(apkFilePath);
+            bodyFormData.append('file', binaryFile);
 
             try {
                 axios({
                     method: "post",
                     url: baseUrl,
-                   // data: bodyFormData,
-                    data: apkFilePath,
+                    data: binaryFile,
                     headers: {
                         "Authorization": encryptedAuth,
-                         "Content-Type": "application/octet-stream"
+                         "Content-Type": "multipart/form-data"
                     },
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity
