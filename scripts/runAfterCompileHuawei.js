@@ -3,7 +3,7 @@ const path = require('path');
 var exec = require('child_process').exec;
 
 module.exports = async function(context) {
-    console.log('✅ -- Executing after_compile hook to manage Cordova plugin.');
+    console.log('✅ -- Executing Hook to manage Cordova plugin in Another branch to HUAWEI.');
 
     // Get variables from huawei_info.json file
     const projectRoot = context.opts.projectRoot;
