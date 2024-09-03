@@ -19,17 +19,18 @@ module.exports = async function(context) {
         return;
     }
 
+    // Assuming you have set up the necessary variables earlier
     try {
         // Command to remove the existing plugin
         const removePluginCommand = 'cordova plugin remove com-infobip-plugins-mobilemessaging --verbose';
         console.log("🔄 -- Removing existing plugin...");
-        await execShellCommand(removePluginCommand);
+        await execShellCommand(removePluginCommand);  // Wait for plugin removal to finish
         console.log("✅ -- Plugin removed successfully.");
 
         // Command to add the plugin from the specific branch of the Git repository
         const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#and-implementation-huawei --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
         console.log("🔄 -- Adding plugin from specific branch...");
-        await execShellCommand(addPluginCommand);
+        await execShellCommand(addPluginCommand);  // Wait for plugin add to finish, including any hooks
         console.log("✅ -- Plugin added successfully.");
 
     } catch (error) {
