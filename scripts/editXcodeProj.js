@@ -4,13 +4,21 @@ const parseString = require('xml2js').parseString;
 
 function getProjectName() {
     return new Promise((resolve, reject) => {
+        console.log('Reading project name from config.xml...');
         fs.readFile('config.xml', (err, data) => {
-            if (err) return reject(err);
+            if (err) {
+                console.error('Error reading config.xml:', err.message);
+                return reject(err);
+            }
 
             parseString(data.toString(), (err, result) => {
-                if (err) return reject(err);
+                if (err) {
+                    console.error('Error parsing config.xml:', err.message);
+                    return reject(err);
+                }
 
                 let name = result.widget.name.toString().trim();
+                console.log('Project name:', name);
                 resolve(name || null);
             });
         });
@@ -20,44 +28,77 @@ function getProjectName() {
 function getProvisioningInfo() {
     return new Promise((resolve, reject) => {
         const jsonFilePath = path.join(process.cwd(), 'provisioning_info.json');
+        console.log('Reading provisioning information from:', jsonFilePath);
 
         fs.readFile(jsonFilePath, 'utf8', (err, data) => {
-            if (err) return reject(`Error reading provisioning info JSON file: ${err.message}`);
+            if (err) {
+                console.error('Error reading provisioning info JSON file:', err.message);
+                return reject(`Error reading provisioning info JSON file: ${err.message}`);
+            }
 
             try {
                 const provisioningInfo = JSON.parse(data);
                 const { provisioningProfileName, teamID } = provisioningInfo;
 
                 if (!provisioningProfileName || !teamID) {
+                    console.error('Provisioning profile name or team ID not found in JSON file.');
                     return reject('Provisioning profile name or team ID not found in JSON file.');
                 }
 
+                console.log('Provisioning profile name:', provisioningProfileName);
+                console.log('Team ID:', teamID);
                 resolve({ provisioningProfileName, teamID });
             } catch (err) {
+                console.error('Error parsing provisioning info JSON file:', err.message);
                 reject(`Error parsing provisioning info JSON file: ${err.message}`);
             }
         });
     });
 }
 
+function backupPbxProj(pbxprojPath) {
+    return new Promise((resolve, reject) => {
+        const backupPath = path.join(path.dirname(pbxprojPath), 'project-before-edit.pbxproj');
+        console.log('Creating backup of project.pbxproj at:', backupPath);
+
+        fs.copyFile(pbxprojPath, backupPath, (err) => {
+            if (err) {
+                console.error('Error creating backup file:', err.message);
+                return reject(`Error creating backup file: ${err.message}`);
+            }
+            console.log(`Backup successfully created at ${backupPath}`);
+            resolve();
+        });
+    });
+}
+
 function updatePbxProj(pbxprojPath, teamID, ppName) {
     return new Promise((resolve, reject) => {
-        fs.readFile(pbxprojPath, 'utf8', (err, data) => {
-            if (err) return reject(err);
+        console.log('Updating project.pbxproj at:', pbxprojPath);
 
-            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*[A-Z0-9]+;/g;
+        fs.readFile(pbxprojPath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('Error reading project.pbxproj:', err.message);
+                return reject(err);
+            }
+
+            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
             const ppSpecifierPattern = /PROVISIONING_PROFILE_SPECIFIER\s*=\s*".+?";/g;
 
-            let updatedPbxproj = data.replace(teamIDPattern, (match) => {
-                return `${match}\n"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${teamID};`;
+            let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
+                const correctTeamID = p1 || teamID;
+                return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};`;
             });
 
             updatedPbxproj = updatedPbxproj.replace(ppSpecifierPattern, (match) => {
-                return `${match}\n"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
+                return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
-                if (err) return reject(err);
+                if (err) {
+                    console.error('Error writing updated project.pbxproj:', err.message);
+                    return reject(err);
+                }
                 console.log('Successfully updated the project.pbxproj file.');
                 resolve();
             });
@@ -74,15 +115,19 @@ function editXcodeProj() {
 
             return getProvisioningInfo().then(({ provisioningProfileName, teamID }) => {
                 const xcodeprojPath = path.join('platforms', 'ios', `${projectName}.xcodeproj`, 'project.pbxproj');
+                console.log('Resolved path to project.pbxproj:', xcodeprojPath);
+
                 if (!fs.existsSync(xcodeprojPath)) {
+                    console.error('The path to project.pbxproj was not found:', xcodeprojPath);
                     throw new Error(`The path to project.pbxproj was not found: ${xcodeprojPath}`);
                 }
 
-                return updatePbxProj(xcodeprojPath, teamID, provisioningProfileName);
+                return backupPbxProj(xcodeprojPath)
+                    .then(() => updatePbxProj(xcodeprojPath, teamID, provisioningProfileName));
             });
         })
         .catch((err) => {
-            console.error(err.message);
+            console.error('Error during the editXcodeProj process:', err.message);
             throw err;
         });
 }
