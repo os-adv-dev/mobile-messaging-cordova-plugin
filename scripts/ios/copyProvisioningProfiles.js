@@ -3,7 +3,7 @@
 var fs = require('fs');
 var path = require('path');
 var Q = require('q');
-var {log} = require('./utils')
+var {log} = require('../utils')
 
 
 console.log('\x1b[40m');

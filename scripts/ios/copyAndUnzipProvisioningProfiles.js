@@ -13,7 +13,7 @@ var {
     log,
     copyFromSourceToDestPath,
     checkIfFolderExists
-} = require("./utils");
+} = require("../utils");
 
 var constants = {
   osTargetFolder: "provisioning-profiles"
