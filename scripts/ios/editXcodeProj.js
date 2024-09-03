@@ -82,17 +82,18 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return reject(err);
             }
 
-            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
-            const ppSpecifierPattern = /PROVISIONING_PROFILE_SPECIFIER\s*=\s*".+?";/g;
+            //const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
+            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*/g;
+            //const ppSpecifierPattern = /PROVISIONING_PROFILE_SPECIFIER\s*=\s*".+?";/g;
 
             let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
                 const correctTeamID = p1 || teamID;
-                return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};`;
+                return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
 
-            updatedPbxproj = updatedPbxproj.replace(ppSpecifierPattern, (match) => {
-                return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
-            });
+            //updatedPbxproj = updatedPbxproj.replace(ppSpecifierPattern, (match) => {
+            //    return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
+            //});
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
