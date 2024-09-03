@@ -11,6 +11,7 @@
         <engine name="cordova-ios" version=">=4.3.0"/>
     </engines>
 	<!--<dependency id="cordova-plugin-add-swift-support"/>-->
+	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS1"/>
 	<dependency id="cordova-custom-config"/>
 	<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 
@@ -28,7 +29,7 @@
 
 	<platform name="ios">
 	
-	<hook type="before_plugin_install" src="scripts/ios/add_swift_support.js" />
+	<!-- <hook type="before_plugin_install" src="scripts/ios/add_swift_support.js" /> -->
 	<hook type="before_plugin_install" src="scripts/ios/save_json_info.js" />
 	<hook type="before_plugin_install" src="scripts/ios/install_prerequisites.js"/>
 	<hook type="before_plugin_install" src="scripts/ios/copyAndUnzipProvisioningProfiles.js"/> 
@@ -36,7 +37,7 @@
 	<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
 	<hook type="after_prepare" src="scripts/ios/copyProvisioningProfiles.js"/>
 	<hook type="after_prepare" src="scripts/ios/update_podfile.js"/>
-	<!--<hook type="after_prepare" src="scripts/ios/editXcodeProj.js" />-->
+	<hook type="after_prepare" src="scripts/ios/editXcodeProj.js" />
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>

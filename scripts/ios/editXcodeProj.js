@@ -82,8 +82,8 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return reject(err);
             }
 
-            //const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
-            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*/g;
+            const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
+            //const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*/g;
             //const ppSpecifierPattern = /PROVISIONING_PROFILE_SPECIFIER\s*=\s*".+?";/g;
 
             let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
