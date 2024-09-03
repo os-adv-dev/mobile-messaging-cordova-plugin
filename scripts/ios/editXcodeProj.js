@@ -56,14 +56,14 @@ function getProvisioningInfo() {
     });
 }
 
-function backupPbxProj(pbxprojPath) {
+function backupPbxProj(pbxprojPath, backupName) {
     return new Promise((resolve, reject) => {
-        const backupPath = path.join(path.dirname(pbxprojPath), 'project-before-edit.pbxproj');
-        console.log('Creating backup of project.pbxproj at:', backupPath);
+        const backupPath = path.join(path.dirname(pbxprojPath), backupName);
+        console.log(`Creating backup of project.pbxproj at: ${backupPath}`);
 
         fs.copyFile(pbxprojPath, backupPath, (err) => {
             if (err) {
-                console.error('Error creating backup file:', err.message);
+                console.error(`Error creating backup file: ${err.message}`);
                 return reject(`Error creating backup file: ${err.message}`);
             }
             console.log(`Backup successfully created at ${backupPath}`);
@@ -83,17 +83,11 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
             }
 
             const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
-            //const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*/g;
-            //const ppSpecifierPattern = /PROVISIONING_PROFILE_SPECIFIER\s*=\s*".+?";/g;
 
             let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
                 const correctTeamID = p1 || teamID;
                 return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
-
-            //updatedPbxproj = updatedPbxproj.replace(ppSpecifierPattern, (match) => {
-            //    return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
-            //});
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
@@ -123,8 +117,9 @@ function editXcodeProj() {
                     throw new Error(`The path to project.pbxproj was not found: ${xcodeprojPath}`);
                 }
 
-                return backupPbxProj(xcodeprojPath)
-                    .then(() => updatePbxProj(xcodeprojPath, teamID, provisioningProfileName));
+                return backupPbxProj(xcodeprojPath, 'project-before-edit.pbxproj')
+                    .then(() => updatePbxProj(xcodeprojPath, teamID, provisioningProfileName))
+                    .then(() => backupPbxProj(xcodeprojPath, 'project-after_hook.pbxproj'));
             });
         })
         .catch((err) => {
