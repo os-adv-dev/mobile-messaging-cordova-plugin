@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-var exec = require('child_process').exec;
+const exec = require('child_process').exec;
 
 module.exports = async function(context) {
     console.log('✅ -- Executing Hook to manage Cordova plugin in Another branch to HUAWEI.');
@@ -43,11 +43,12 @@ function execShellCommand(cmd) {
     return new Promise((resolve, reject) => {
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
-                console.error(stderr);
+                console.error(`❌ -- Error: ${stderr}`);
                 reject(`Error: ${error}`);
+            } else {
+                console.log(stdout);
+                resolve(stdout);
             }
-            console.log(stdout);
-            resolve(stdout);
         });
     });
 }
