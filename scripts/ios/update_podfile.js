@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-module.exports = function(context) {
+module.exports = function (context) {
     return new Promise((resolve, reject) => {
         const projectRoot = context.opts.projectRoot;
         const podfilePath = path.join(projectRoot, 'platforms', 'ios', 'Podfile');
@@ -34,19 +34,21 @@ module.exports = function(context) {
             console.log('✅ Podfile updated successfully!');
 
             // Run 'pod install' to update the Pods
+            console.log('Running pod install...');
             exec('pod install', { cwd: path.dirname(podfilePath) }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`🚨 Error running pod install: ${error.message}`);
                     return reject(new Error(`Error running pod install: ${error.message}`));
                 }
 
-                console.log('✅ pod install completed successfully!');
+                // Log stdout and stderr for further insights
                 console.log(stdout);
                 if (stderr) {
-                    console.error(stderr);
+                    console.error(`pod install stderr: ${stderr}`);
                 }
 
-                resolve();
+                console.log('✅ pod install completed successfully!');
+                resolve(); 
             });
         } catch (error) {
             console.error(`🚨 Error updating Podfile: ${error.message}`);
