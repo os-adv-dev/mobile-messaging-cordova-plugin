@@ -89,6 +89,12 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
 
+            const productNamePattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
+
+            updatedPbxproj = updatedPbxproj.replace(productNamePattern, (match) => {
+                return `${match}\n\t\t\t\tSWIFT_VERSION = 5.0;`;
+            });
+
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
                     console.error('Error writing updated project.pbxproj:', err.message);
