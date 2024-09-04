@@ -92,7 +92,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
             const productNamePattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
 
             updatedPbxproj = updatedPbxproj.replace(productNamePattern, (match) => {
-                return `${match}\n\t\t\t\tSWIFT_VERSION = 5.0;`;
+                return `${match}\n\t\t\t\tSWIFT_VERSION = 5;`;
             });
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
