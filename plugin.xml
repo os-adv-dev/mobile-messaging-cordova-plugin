@@ -41,6 +41,7 @@
 	<hook type="after_prepare" src="scripts/ios/copyProvisioningProfiles.js"/>
 	<!-- <hook type="after_prepare" src="scripts/ios/update_podfile.js"/> -->
 	<hook type="after_plugin_install" src="scripts/ios/editXcodeProj.js" />
+	<hook type="after_prepare" src="scripts/ios/run_modify_podfile.js" />
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
@@ -80,6 +81,26 @@
 				<pod name="MobileMessaging/Inbox" spec="12.6.2" />
 			</pods>
 		</podspec>
+		
+
+		<!-- Pods for the main target -->
+	<!--
+	    <podspec>
+	        <pods use-frameworks="true">
+	            <pod name="MobileMessaging" spec="12.6.2" />
+	            <pod name="MobileMessaging/Geofencing" spec="12.6.2" />
+	            <pod name="MobileMessaging/InAppChat" spec="12.6.2" />
+	            <pod name="MobileMessaging/Inbox" spec="12.6.2" />
+	        </pods>
+	    </podspec> 
+
+	    <framework custom="true" type="podspec">
+	        <![CDATA[
+	        target 'MobileMessagingNotificationExtension' do
+	            inherit! :search_paths
+	        end
+	        ]]>
+	    </framework>-->
 
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 
