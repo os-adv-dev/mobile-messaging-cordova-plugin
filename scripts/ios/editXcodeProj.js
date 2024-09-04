@@ -89,6 +89,21 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
 
+            // Ensure SWIFT_VERSION is set to 5.0 where SWIFT_OBJC_INTERFACE_HEADER_NAME exists
+            const swiftInterfacePattern = /SWIFT_OBJC_INTERFACE_HEADER_NAME\s*=\s*"OutSystems-Swift.h";/g;
+            updatedPbxproj = updatedPbxproj.replace(swiftInterfacePattern, (match, offset, string) => {
+                const sectionStartIndex = string.lastIndexOf("{", offset);
+                const sectionEndIndex = string.indexOf("};", offset);
+
+                // Check if SWIFT_VERSION is present in the same section
+                const section = string.substring(sectionStartIndex, sectionEndIndex);
+                if (!/SWIFT_VERSION\s*=\s*"5\.0";/.test(section)) {
+                    console.log('Adding SWIFT_VERSION = 5.0 to section with SWIFT_OBJC_INTERFACE_HEADER_NAME = "OutSystems-Swift.h"');
+                    return `${match}\n\t\t\t\tSWIFT_VERSION = 5.0;`;
+                }
+                return match; // If SWIFT_VERSION is already set, return the match as is
+            });
+
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
                     console.error('Error writing updated project.pbxproj:', err.message);
