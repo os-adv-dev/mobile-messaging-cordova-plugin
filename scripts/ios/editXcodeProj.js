@@ -32,7 +32,7 @@ function getProvisioningInfo() {
 
         fs.readFile(jsonFilePath, 'utf8', (err, data) => {
             if (err) {
-                console.error('Error reading provisioning info JSON file:', err.message);
+                console.error('🚨 Error reading provisioning info JSON file:', err.message);
                 return reject(`Error reading provisioning info JSON file: ${err.message}`);
             }
 
@@ -41,15 +41,15 @@ function getProvisioningInfo() {
                 const { provisioningProfileName, teamID } = provisioningInfo;
 
                 if (!provisioningProfileName || !teamID) {
-                    console.error('Provisioning profile name or team ID not found in JSON file.');
+                    console.error('🚨 Provisioning profile name or team ID not found in JSON file.');
                     return reject('Provisioning profile name or team ID not found in JSON file.');
                 }
 
-                console.log('Provisioning profile name:', provisioningProfileName);
-                console.log('Team ID:', teamID);
+                console.log('👉 Provisioning profile name:', provisioningProfileName);
+                console.log('👉 Team ID:', teamID);
                 resolve({ provisioningProfileName, teamID });
             } catch (err) {
-                console.error('Error parsing provisioning info JSON file:', err.message);
+                console.error('🚨 Error parsing provisioning info JSON file:', err.message);
                 reject(`Error parsing provisioning info JSON file: ${err.message}`);
             }
         });
@@ -59,14 +59,14 @@ function getProvisioningInfo() {
 function backupPbxProj(pbxprojPath, backupName) {
     return new Promise((resolve, reject) => {
         const backupPath = path.join(path.dirname(pbxprojPath), backupName);
-        console.log(`Creating backup of project.pbxproj at: ${backupPath}`);
+        console.log(`👉 Creating backup of project.pbxproj at: ${backupPath}`);
 
         fs.copyFile(pbxprojPath, backupPath, (err) => {
             if (err) {
-                console.error(`Error creating backup file: ${err.message}`);
+                console.error(`🚨 Error creating backup file: ${err.message}`);
                 return reject(`Error creating backup file: ${err.message}`);
             }
-            console.log(`Backup successfully created at ${backupPath}`);
+            console.log(`✅ Backup successfully created at ${backupPath}`);
             resolve();
         });
     });
@@ -74,11 +74,11 @@ function backupPbxProj(pbxprojPath, backupName) {
 
 function updatePbxProj(pbxprojPath, teamID, ppName) {
     return new Promise((resolve, reject) => {
-        console.log('Updating project.pbxproj at:', pbxprojPath);
+        console.log('👉 Updating project.pbxproj at:', pbxprojPath);
 
         fs.readFile(pbxprojPath, 'utf8', (err, data) => {
             if (err) {
-                console.error('Error reading project.pbxproj:', err.message);
+                console.error('🚨 Error reading project.pbxproj:', err.message);
                 return reject(err);
             }
 
@@ -97,10 +97,10 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
-                    console.error('Error writing updated project.pbxproj:', err.message);
+                    console.error('🚨 Error writing updated project.pbxproj:', err.message);
                     return reject(err);
                 }
-                console.log('Successfully updated the project.pbxproj file.');
+                console.log('✅ Successfully updated the project.pbxproj file.');
                 resolve();
             });
         });
@@ -111,15 +111,15 @@ function editXcodeProj() {
     return getProjectName()
         .then((projectName) => {
             if (!projectName) {
-                throw new Error('Project name not found in config.xml.');
+                throw new Error('🚨 Project name not found in config.xml.');
             }
 
             return getProvisioningInfo().then(({ provisioningProfileName, teamID }) => {
                 const xcodeprojPath = path.join('platforms', 'ios', `${projectName}.xcodeproj`, 'project.pbxproj');
-                console.log('Resolved path to project.pbxproj:', xcodeprojPath);
+                console.log('👉 Resolved path to project.pbxproj:', xcodeprojPath);
 
                 if (!fs.existsSync(xcodeprojPath)) {
-                    console.error('The path to project.pbxproj was not found:', xcodeprojPath);
+                    console.error('🚨 The path to project.pbxproj was not found:', xcodeprojPath);
                     throw new Error(`The path to project.pbxproj was not found: ${xcodeprojPath}`);
                 }
 
@@ -129,7 +129,7 @@ function editXcodeProj() {
             });
         })
         .catch((err) => {
-            console.error('Error during the editXcodeProj process:', err.message);
+            console.error('🚨 Error during the editXcodeProj process:', err.message);
             throw err;
         });
 }
