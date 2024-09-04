@@ -1,7 +1,8 @@
 require 'fileutils'
 
 # Define the path to your Podfile
-podfile_path = File.join(Dir.pwd, 'platforms', 'ios', 'Podfile')
+ios_platform_path = File.join(Dir.pwd, 'platforms', 'ios')
+podfile_path = File.join(ios_platform_path, 'Podfile')
 
 # Check if Podfile exists
 unless File.exist?(podfile_path)
@@ -16,7 +17,6 @@ podfile_content = File.read(podfile_path)
 secondary_target_block = <<-PODBLOCK
 target 'MobileMessagingNotificationExtension' do
     inherit! :search_paths
-    # Add any specific pods here
     # pod 'MobileMessaging', '12.6.2'
 end
 PODBLOCK
@@ -31,4 +31,26 @@ unless podfile_content.include?("target 'MobileMessagingNotificationExtension'")
   puts '✅ Podfile updated successfully!'
 else
   puts '👉 Secondary target already exists in Podfile, no changes made.'
+end
+
+# Print the updated Podfile content
+puts '👉 Updated Podfile content:'
+puts File.read(podfile_path)
+
+# Run 'pod deintegrate' to clean up old Pods
+puts '👉 Running pod deintegrate...'
+if system('pod deintegrate', chdir: ios_platform_path)
+  puts '✅ pod deintegrate completed successfully!'
+else
+  puts '🚨 Error running pod deintegrate.'
+  exit(1)
+end
+
+# Run 'pod install' to install dependencies
+puts '👉 Running pod install...'
+if system('pod install', chdir: ios_platform_path)
+  puts '✅ pod install completed successfully!'
+else
+  puts '🚨 Error running pod install.'
+  exit(1)
 end
