@@ -26,7 +26,7 @@ module.exports = function (context) {
 `;
 
             // Insert the new target block before the last 'end'
-            const updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}end`);
+            const updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}\nend`);
 
             // Write the updated content back to the Podfile
             fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');

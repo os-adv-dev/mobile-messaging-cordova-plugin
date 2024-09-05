@@ -41,7 +41,8 @@
 	<hook type="after_prepare" src="scripts/ios/copyProvisioningProfiles.js"/>
 	<!-- <hook type="after_prepare" src="scripts/ios/update_podfile.js"/> -->
 	<hook type="after_plugin_install" src="scripts/ios/editXcodeProj.js" />
-	<hook type="after_prepare" src="scripts/ios/run_modify_podfile.js" />
+	<!-- <hook type="after_prepare" src="scripts/ios/add_framework_search_path.js" /> -->
+	<hook type="after_prepare" src="scripts/ios/run_fix_framework_search_path.js" />
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>

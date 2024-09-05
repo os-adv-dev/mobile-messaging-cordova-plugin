@@ -82,6 +82,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return reject(err);
             }
 
+            // Regex pattern to find the DEVELOPMENT_TEAM
             const teamIDPattern = /DEVELOPMENT_TEAM\s*=\s*["']?([A-Z0-9]*)["']?;/g;
 
             let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
@@ -89,10 +90,21 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return `${match}\n\t\t\t\t"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";`;
             });
 
+            // Regex pattern to find PRODUCT_NAME and add SWIFT_VERSION
             const productNamePattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
 
             updatedPbxproj = updatedPbxproj.replace(productNamePattern, (match) => {
                 return `${match}\n\t\t\t\tSWIFT_VERSION = 5;`;
+            });
+
+            // Adding PODS_XCFRAMEWORKS_BUILD_DIR setting
+            const buildConfigPattern = /buildSettings\s*=\s*\{([\s\S]*?)\};/g;
+
+            updatedPbxproj = updatedPbxproj.replace(buildConfigPattern, (match, p1) => {
+                if (!p1.includes("PODS_XCFRAMEWORKS_BUILD_DIR")) {
+                    return `${match}\n\t\t\t\tPODS_XCFRAMEWORKS_BUILD_DIR = "build/${p1.includes('Debug') ? 'Debug' : 'Release'}-iphoneos/XCFrameworkIntermediates";`;
+                }
+                return match;  // If already present, no change needed
             });
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
