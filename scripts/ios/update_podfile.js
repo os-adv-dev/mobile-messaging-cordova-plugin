@@ -26,7 +26,7 @@ module.exports = function (context) {
 `;*/
 
             // Insert the new target block before the last 'end'
-            const updatedPodfileContent = podfileContent.replace(/end\s*$/, "\ttarget 'MobileMessagingNotificationExtension' do\n\t\tinherit! :search_paths\n\t\t \n\tend\nend");
+            const updatedPodfileContent = podfileContent.replace(/end\s*$/, "\ttarget 'MobileMessagingNotificationExtension' do\n\t\tinherit! :search_paths\n\tend\nend");
 
             // Write the updated content back to the Podfile
             fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');
