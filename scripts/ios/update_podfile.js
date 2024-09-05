@@ -18,30 +18,15 @@ module.exports = function (context) {
             let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
             // Define the new target block to add
-            const newTargetBlock = `
+ /*           const newTargetBlock = `
   target 'MobileMessagingNotificationExtension' do
-    inherit! :search_paths
+      inherit! :search_paths
+      #pod 'MobileMessaging', '12.6.2'
   end
-`;
+`;*/
 
-            // Define the post_install block to add the required search paths
-            const postInstallBlock = `
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['PODS_XCFRAMEWORKS_BUILD_DIR'] = 'build/\${CONFIGURATION}-iphoneos/XCFrameworkIntermediates'
-      config.build_settings['FRAMEWORK_SEARCH_PATHS'] ||= ['$(inherited)', '"\${PODS_CONFIGURATION_BUILD_DIR}/CocoaLumberjack"', '"\${PODS_CONFIGURATION_BUILD_DIR}/FLEX"', '"\${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore"', '"\${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal"', '"\${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities"', '"\${PODS_CONFIGURATION_BUILD_DIR}/FirebaseInstallations"', '"\${PODS_CONFIGURATION_BUILD_DIR}/MobileMessaging"', '"\${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC"', '"\${PODS_CONFIGURATION_BUILD_DIR}/PureeOS"', '"\${PODS_CONFIGURATION_BUILD_DIR}/YapDatabase"', '"\${PODS_CONFIGURATION_BUILD_DIR}/nanopb"', '"\${PODS_ROOT}/FirebaseAnalytics/Frameworks"', '"\${PODS_ROOT}/GoogleAppMeasurement/Frameworks"', '"\${PODS_XCFRAMEWORKS_BUILD_DIR}/FirebaseAnalytics/AddIdSupport"', '"\${PODS_XCFRAMEWORKS_BUILD_DIR}/GoogleAppMeasurement/AddIdSupport"', '"\${PODS_XCFRAMEWORKS_BUILD_DIR}/GoogleAppMeasurement/WithoutAdIdSupport"']
-    end
-  end
-end
-`;
-
-            // Insert the new target block and post_install block before the last 'end'
-            //let updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}\nend`);
-            //updatedPodfileContent += postInstallBlock;
-
-            let updatedPodfileContent = podfileContent
-            updatedPodfileContent += postInstallBlock;
+            // Insert the new target block before the last 'end'
+            const updatedPodfileContent = podfileContent.replace(/end\s*$/, "\ttarget 'MobileMessagingNotificationExtension' do\n\t\tinherit! :search_paths\n\tend\nend");
 
             // Write the updated content back to the Podfile
             fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');
@@ -67,7 +52,7 @@ end
                 }
 
                 console.log('✅ pod install completed successfully!');
-                resolve();
+                resolve(); 
             });
         } catch (error) {
             console.error(`🚨 Error updating Podfile: ${error.message}`);
