@@ -39,7 +39,7 @@
 	<hook type="before_plugin_install" src="scripts/ios/integrate_notification_extension.js"/>
 	<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
 	<hook type="after_prepare" src="scripts/ios/copyProvisioningProfiles.js"/>
-	<hook type="before_compile" src="scripts/ios/update_podfile.js"/> 
+	<hook type="after_prepare" src="scripts/ios/update_podfile.js"/> 
 	<hook type="after_plugin_install" src="scripts/ios/editXcodeProj.js" />
 	<!-- <hook type="after_prepare" src="scripts/ios/add_framework_search_path.js" /> 
 	<hook type="after_prepare" src="scripts/ios/run_fix_framework_search_path.js" /> -->
