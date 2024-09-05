@@ -2,38 +2,56 @@
 require 'xcodeproj'
 
 # Define the path to the .xcodeproj file
-project_path = 'platforms/ios/MyApp.xcodeproj'  # Change 'MyApp.xcodeproj' to your actual project name
-project = Xcodeproj::Project.open(project_path)
+project_path = 'platforms/ios/*.xcodeproj'  # Replace with the correct path if necessary
+project_file = Dir[project_path].first
+project = Xcodeproj::Project.open(project_file)
 
-# Specify the target you want to modify
-target_name = 'MobileMessagingNotificationExtension'
-desired_search_path = '"${PODS_CONFIGURATION_BUILD_DIR}/MobileMessaging"'
+# Dynamically find the main target (assuming it's the first target)
+main_target = project.targets.first
 
-# Find the target and update the framework search path
-project.targets.each do |target|
-  if target.name == target_name
-    target.build_configurations.each do |config|
-      # Get the current FRAMEWORK_SEARCH_PATHS or initialize it if it doesn't exist
-      search_paths = config.build_settings['FRAMEWORK_SEARCH_PATHS'] || '$(inherited)'
+# Specify the secondary target name
+secondary_target_name = 'MobileMessagingNotificationExtension'  # Secondary target name
 
-      # Check if the search path is an array (it may be a string or an array in Xcode projects)
-      if search_paths.is_a?(Array)
-        # Add the desired path if it doesn't exist in the array
-        unless search_paths.include?(desired_search_path)
-          search_paths << desired_search_path
-          puts "✅ Added framework search path to #{target_name} for configuration #{config.name}"
-        end
-      else
-        # If it's a string, make it an array and add the desired path
-        search_paths = [search_paths, desired_search_path]
-      end
+# Locate the secondary target by name
+secondary_target = project.targets.find { |target| target.name == secondary_target_name }
 
-      # Update the build setting with the modified search paths
-      config.build_settings['FRAMEWORK_SEARCH_PATHS'] = search_paths
+# Define the specific framework search paths
+custom_framework_search_paths = [
+  "$(inherited)",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/CocoaLumberjack",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/FLEX",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/FirebaseCore",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/FirebaseCoreInternal",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/GoogleUtilities",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/FirebaseInstallations",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/MobileMessaging",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/PromisesObjC",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/PureeOS",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/YapDatabase",
+  "$(PODS_CONFIGURATION_BUILD_DIR)/nanopb",
+  "$(PODS_ROOT)/FirebaseAnalytics/Frameworks",
+  "$(PODS_ROOT)/GoogleAppMeasurement/Frameworks",
+  "$(PODS_XCFRAMEWORKS_BUILD_DIR)/FirebaseAnalytics/AddIdSupport",
+  "$(PODS_XCFRAMEWORKS_BUILD_DIR)/GoogleAppMeasurement/AddIdSupport",
+  "$(PODS_XCFRAMEWORKS_BUILD_DIR)/GoogleAppMeasurement/WithoutAdIdSupport"
+]
+
+if main_target && secondary_target
+  main_target.build_configurations.each do |main_config|
+    corresponding_secondary_config = secondary_target.build_configurations.find { |config| config.name == main_config.name }
+
+    if corresponding_secondary_config
+      # Apply custom FRAMEWORK_SEARCH_PATHS for secondary target
+      corresponding_secondary_config.build_settings['FRAMEWORK_SEARCH_PATHS'] = custom_framework_search_paths
+      puts "✅ Applied custom FRAMEWORK_SEARCH_PATHS to #{secondary_target_name} for configuration #{main_config.name}"
+    else
+      puts "⚠️ No corresponding build configuration found for #{secondary_target_name} in #{main_config.name}"
     end
   end
-end
 
-# Save the project file
-project.save
-puts "🚀 Successfully updated framework search paths in target #{target_name}"
+  # Save the changes to the project
+  project.save
+  puts "🚀 Successfully updated FRAMEWORK_SEARCH_PATHS for target #{secondary_target_name}"
+else
+  puts "🚨 Could not find one or both targets: #{main_target&.name}, #{secondary_target_name}"
+end
