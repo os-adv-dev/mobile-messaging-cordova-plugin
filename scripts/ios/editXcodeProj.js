@@ -87,7 +87,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
 
             let updatedPbxproj = data.replace(teamIDPattern, (match, p1) => {
                 const correctTeamID = p1 || teamID;
-                return `"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)":`;
+                return `"DEVELOPMENT_TEAM[sdk=iphoneos*]" = ${correctTeamID};\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
             });
 
             // Regex pattern to find PRODUCT_NAME and add SWIFT_VERSION

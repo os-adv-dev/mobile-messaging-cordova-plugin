@@ -2,41 +2,38 @@
 require 'xcodeproj'
 
 # Define the path to the .xcodeproj file
-project_path = 'platforms/ios/*.xcodeproj'  # Replace with the correct path if necessary
-project_file = Dir[project_path].first
-project = Xcodeproj::Project.open(project_file)
+project_path = 'platforms/ios/MyApp.xcodeproj'  # Change 'MyApp.xcodeproj' to your actual project name
+project = Xcodeproj::Project.open(project_path)
 
-# Dynamically find the main target (assuming it's the first target)
-main_target = project.targets.first
+# Specify the target you want to modify
+target_name = 'MobileMessagingNotificationExtension'
+desired_search_path = '"${PODS_CONFIGURATION_BUILD_DIR}/MobileMessaging"'
 
-# Specify the secondary target name
-secondary_target_name = 'MobileMessagingNotificationExtension'  # Secondary target name
+# Find the target and update the framework search path
+project.targets.each do |target|
+  if target.name == target_name
+    target.build_configurations.each do |config|
+      # Get the current FRAMEWORK_SEARCH_PATHS or initialize it if it doesn't exist
+      search_paths = config.build_settings['FRAMEWORK_SEARCH_PATHS'] || '$(inherited)'
 
-# Locate the secondary target by name
-secondary_target = project.targets.find { |target| target.name == secondary_target_name }
-
-if main_target && secondary_target
-  main_target.build_configurations.each do |main_config|
-    corresponding_secondary_config = secondary_target.build_configurations.find { |config| config.name == main_config.name }
-
-    if corresponding_secondary_config
-      # Copy FRAMEWORK_SEARCH_PATHS from main to secondary target
-      framework_search_paths = main_config.build_settings['FRAMEWORK_SEARCH_PATHS']
-
-      if framework_search_paths
-        corresponding_secondary_config.build_settings['FRAMEWORK_SEARCH_PATHS'] = framework_search_paths
-        puts "✅ Copied FRAMEWORK_SEARCH_PATHS from #{main_target.name} to #{secondary_target_name} for configuration #{main_config.name}"
+      # Check if the search path is an array (it may be a string or an array in Xcode projects)
+      if search_paths.is_a?(Array)
+        # Add the desired path if it doesn't exist in the array
+        unless search_paths.include?(desired_search_path)
+          search_paths << desired_search_path
+          puts "✅ Added framework search path to #{target_name} for configuration #{config.name}"
+        end
       else
-        puts "⚠️ No FRAMEWORK_SEARCH_PATHS found for #{main_target.name} in configuration #{main_config.name}"
+        # If it's a string, make it an array and add the desired path
+        search_paths = [search_paths, desired_search_path]
       end
-    else
-      puts "⚠️ No corresponding build configuration found for #{secondary_target_name} in #{main_config.name}"
+
+      # Update the build setting with the modified search paths
+      config.build_settings['FRAMEWORK_SEARCH_PATHS'] = search_paths
     end
   end
-
-  # Save the changes to the project
-  project.save
-  puts "🚀 Successfully updated FRAMEWORK_SEARCH_PATHS for target #{secondary_target_name}"
-else
-  puts "🚨 Could not find one or both targets: #{main_target&.name}, #{secondary_target_name}"
 end
+
+# Save the project file
+project.save
+puts "🚀 Successfully updated framework search paths in target #{target_name}"
