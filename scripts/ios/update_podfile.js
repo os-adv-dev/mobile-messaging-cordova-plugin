@@ -33,6 +33,10 @@ module.exports = function (context) {
 
             console.log('✅ Podfile updated successfully!');
 
+            // Log the contents of the Podfile after the change
+            console.log('📄 Updated Podfile contents:');
+            console.log(updatedPodfileContent);
+
             // Run 'pod install' to update the Pods
             console.log('Running pod install...');
             exec('pod install', { cwd: path.dirname(podfilePath) }, (error, stdout, stderr) => {
