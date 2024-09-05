@@ -18,15 +18,15 @@ module.exports = function (context) {
             let podfileContent = fs.readFileSync(podfilePath, 'utf8');
 
             // Define the new target block to add
-            const newTargetBlock = `
+ /*           const newTargetBlock = `
   target 'MobileMessagingNotificationExtension' do
       inherit! :search_paths
       #pod 'MobileMessaging', '12.6.2'
   end
-`;
+`;*/
 
             // Insert the new target block before the last 'end'
-            const updatedPodfileContent = podfileContent.replace(/end\s*$/, `${newTargetBlock}\nend`);
+            const updatedPodfileContent = podfileContent.replace(/end\s*$/, "\ttarget 'MobileMessagingNotificationExtension' do\n\t\tinherit! :search_paths\n\t\t \n\tend\nend");
 
             // Write the updated content back to the Podfile
             fs.writeFileSync(podfilePath, updatedPodfileContent, 'utf8');
