@@ -18,8 +18,8 @@ module.exports = function(ctx) {
     console.log(" -- repositoriesGradlePath: "+repositoriesGradlePath);
 
     var args = process.argv.slice(2);
-    var hmsBuild = args.includes("--hms");
-    console.log("-- ✅ Huawei Add Extra Dependencies HMS Build:  " + hmsBuild);
+    var hmsBuild = true;
+    console.log("-- ✅ Huawei Add Extra Dependencies HMS Build -- :  " + hmsBuild);
 
     if(hmsBuild) {
         // Read the build.gradle file
