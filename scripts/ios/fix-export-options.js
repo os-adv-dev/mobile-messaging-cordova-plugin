@@ -10,11 +10,11 @@ module.exports = function(context) {
     // Reading provisioning information from JSON file
     const provisioningInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
 
-    const { firstTargetId, firstTargetPP, secondTargetId, secondTargetPP, teamID } = provisioningInfo;
+    const { firstTargetId, firstTargetPP, secondTargetId, secondTargetPP } = provisioningInfo;
 
     // Check if essential info is available
-    if (!(firstTargetId && firstTargetPP && secondTargetId && secondTargetPP && teamID)) {
-        throw new Error('Required provisioning profile and team ID information not found in provisioning_info.json');
+    if (!(firstTargetId && firstTargetPP && secondTargetId && secondTargetPP)) {
+        throw new Error('Required provisioning profile information not found in provisioning_info.json');
     }
 
     // Read build.js content
@@ -37,8 +37,7 @@ module.exports = function(context) {
             provisioningProfiles: {
                 "${firstTargetId}": "${firstTargetPP}",
                 "${secondTargetId}": "${secondTargetPP}"
-            },
-            teamID: "${teamID}",`;
+            },`;
 
         // Inject the provisioning profiles into the exportOptions object
         const modifiedBuildJsContent = buildJsContent.replace(
