@@ -55,8 +55,8 @@ module.exports = function (context) {
         // Build the provisioning profiles dictionary to inject
         const provisioningProfileBlock = `
             provisioningProfiles: {
-                "${firstTargetId}": "${firstTargetPP}",
-                "${secondTargetId}": "${secondTargetPP}"
+                ${firstTargetId}: "${firstTargetPP}",
+                ${secondTargetId}: "${secondTargetPP}"
             },`;
 
         // Inject the provisioning profiles into the exportOptions object
