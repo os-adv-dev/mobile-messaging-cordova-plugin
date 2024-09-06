@@ -46,6 +46,7 @@
 	<!-- <hook type="before_prepare" src="scripts/ios/edit-prepare-js.js"/>  -->
 	<!-- <hook type="after_prepare" src="scripts/ios/add_framework_search_path.js" /> 
 	<hook type="after_prepare" src="scripts/ios/run_fix_framework_search_path.js" /> -->
+	<hook type="after_prepare" src="scripts/ios/list_pp_folder.js"/>
 
 		<config-file parent="UIBackgroundModes" target="*Info.plist">
             <array>
