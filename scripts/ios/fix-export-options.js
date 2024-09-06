@@ -3,18 +3,31 @@ const path = require('path');
 
 module.exports = function(context) {
     const projectRoot = context.opts.projectRoot;
-    // Adjust the path to match the same one we used for prepare.js and Podfile.js
     const buildJsPath = path.join(projectRoot, 'node_modules', 'cordova-ios', 'lib', 'build.js');
     const jsonFilePath = path.join(projectRoot, 'provisioning_info.json');
 
+    console.log(`📄 Project Root: ${projectRoot}`);
+    console.log(`📄 Path to build.js: ${buildJsPath}`);
+    console.log(`📄 Path to provisioning_info.json: ${jsonFilePath}`);
+
     // Reading provisioning information from JSON file
-    const provisioningInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    let provisioningInfo;
+    try {
+        provisioningInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+        console.log(`✅ Successfully read provisioning_info.json.`);
+    } catch (error) {
+        console.error(`🚨 Error reading provisioning_info.json: ${error.message}`);
+        return;
+    }
 
     const { firstTargetId, firstTargetPP, secondTargetId, secondTargetPP } = provisioningInfo;
+    console.log(`👉 firstTargetId: ${firstTargetId}, firstTargetPP: ${firstTargetPP}`);
+    console.log(`👉 secondTargetId: ${secondTargetId}, secondTargetPP: ${secondTargetPP}`);
 
     // Check if essential info is available
     if (!(firstTargetId && firstTargetPP && secondTargetId && secondTargetPP)) {
-        throw new Error('Required provisioning profile information not found in provisioning_info.json');
+        console.error('🚨 Required provisioning profile information not found in provisioning_info.json');
+        return;
     }
 
     // Read build.js content
@@ -24,13 +37,18 @@ module.exports = function(context) {
             return;
         }
 
+        console.log('📄 Successfully read build.js content.');
+
         // Regex to find where exportOptions are created in build.js
         const exportOptionsRegex = /const exportOptions = \{(.|\n)*?method: 'development',/;
 
         if (!exportOptionsRegex.test(buildJsContent)) {
-            console.error(`🚨 Could not find exportOptions block in build.js.`);
+            console.error('🚨 Could not find exportOptions block in build.js.');
+            console.log('🔍 Here is a snippet from build.js for inspection:\n', buildJsContent.slice(0, 1000)); // Print the first 1000 chars for inspection
             return;
         }
+
+        console.log('✅ Found exportOptions block in build.js.');
 
         // Build the provisioning profiles dictionary to inject
         const provisioningProfileBlock = `
