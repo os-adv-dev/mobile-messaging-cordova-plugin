@@ -20,7 +20,7 @@ module.exports = function (context) {
             const targetBlockAddition = `
             "\ttarget 'MobileMessagingNotificationExtension' do\\n" +
             '\t\tinherit! :search_paths\\n' +
-            '\tend\n'
+            '\tend\\n'
             `;
 
             const newGetTemplate = `Podfile.prototype.getTemplate = function () {
