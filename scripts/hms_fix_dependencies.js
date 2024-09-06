@@ -12,8 +12,8 @@ module.exports = function(ctx) {
     }
 
     var args = process.argv.slice(2);
-    var hmsBuild = args.includes("--hms");
-    console.log("HMS Build:  " + hmsBuild);
+    var hmsBuild = true;
+    console.log(" ✅ ---- SET HMS Build TRUE :  " + hmsBuild);
 
     function updateIsHmsBuild(isHmsBuild) {
         var deferred = Q.defer();
