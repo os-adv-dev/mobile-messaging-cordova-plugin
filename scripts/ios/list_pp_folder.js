@@ -6,7 +6,7 @@ module.exports = function (context) {
     return new Promise((resolve, reject) => {
         try {
             // Get the user's home directory and path to Provisioning Profiles
-            const provisioningProfilesDir = path.join(os.homedir(), 'Library', 'MobileDevice', 'Provisioning Profiles');
+            const provisioningProfilesDir = path.join(os.homedir(), 'Library', 'MobileDevice', 'Provisioning\ Profiles');
             console.log("👉 provisioningProfilesDir: " + provisioningProfilesDir);
             
             console.log('📂 Checking Provisioning Profiles folder...');
