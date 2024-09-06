@@ -40,10 +40,10 @@ module.exports = function(ctx) {
             }
 
             // Check if the classpath is already added
-            if (!data.includes("classpath 'com.huawei.agconnect:agcp:1.6.0.300'")) {
+            if (!data.includes("classpath 'com.huawei.agconnect:agcp:1.9.1.301'")) {
                 // Insert the classpath after the AGP classpath
                 updatedData = updatedData.replace(/classpath "com.android.tools.build:gradle:\${cordovaConfig.AGP_VERSION}"/,
-                    'classpath "com.android.tools.build:gradle:${cordovaConfig.AGP_VERSION}"\n        classpath \'com.huawei.agconnect:agcp:1.6.0.300\'');
+                    'classpath "com.android.tools.build:gradle:${cordovaConfig.AGP_VERSION}"\n        classpath \'com.huawei.agconnect:agcp:1.9.1.301\'');
             } else {
                 console.log('Huawei AGConnect classpath already added.');
             }
