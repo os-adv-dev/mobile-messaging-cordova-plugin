@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = function(context) {
+module.exports = function (context) {
     const projectRoot = context.opts.projectRoot;
     const buildJsPath = path.join(projectRoot, 'node_modules', 'cordova-ios', 'lib', 'build.js');
     const jsonFilePath = path.join(projectRoot, 'provisioning_info.json');
@@ -39,16 +39,18 @@ module.exports = function(context) {
 
         console.log('📄 Successfully read build.js content.');
 
-        // Regex to find where exportOptions are created in build.js
-        const exportOptionsRegex = /const exportOptions = \{(.|\n)*?method: 'development',/;
+        // Updated and more flexible regex to find the exportOptions block
+        const exportOptionsRegex = /const\s+exportOptions\s+=\s+\{[^}]*method:\s*'[^']+',/;
 
-        if (!exportOptionsRegex.test(buildJsContent)) {
+        const match = buildJsContent.match(exportOptionsRegex);
+        if (!match) {
             console.error('🚨 Could not find exportOptions block in build.js.');
-            console.log('🔍 Here is a snippet from build.js for inspection:\n', buildJsContent.slice(0, 1000)); // Print the first 1000 chars for inspection
+            console.log('🔍 Here is a snippet from build.js for inspection:\n', buildJsContent.slice(0, 2000)); // Print the first 2000 chars for inspection
             return;
         }
 
         console.log('✅ Found exportOptions block in build.js.');
+        console.log('🔍 exportOptions block snippet:', match[0]);
 
         // Build the provisioning profiles dictionary to inject
         const provisioningProfileBlock = `
@@ -60,7 +62,7 @@ module.exports = function(context) {
         // Inject the provisioning profiles into the exportOptions object
         const modifiedBuildJsContent = buildJsContent.replace(
             exportOptionsRegex,
-            match => match + provisioningProfileBlock
+            match[0] + provisioningProfileBlock
         );
 
         // Write the modified build.js content back
