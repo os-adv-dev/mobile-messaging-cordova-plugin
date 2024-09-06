@@ -38,7 +38,7 @@ module.exports = function (context) {
             console.log(updatedPodfileContent);
 
             // Run 'pod install' to update the Pods
-            console.log('Running pod install...');
+            /*console.log('Running pod install...');
             exec('pod install --verbose', { cwd: path.dirname(podfilePath) }, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`🚨 Error running pod install: ${error.message}`);
@@ -53,7 +53,7 @@ module.exports = function (context) {
 
                 console.log('✅ pod install completed successfully!');
                 resolve(); 
-            });
+            });*/
         } catch (error) {
             console.error(`🚨 Error updating Podfile: ${error.message}`);
             reject(new Error(`Error updating Podfile: ${error.message}`));
