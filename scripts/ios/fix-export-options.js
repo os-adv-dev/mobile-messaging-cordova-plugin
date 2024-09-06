@@ -39,13 +39,13 @@ module.exports = function (context) {
 
         console.log('📄 Successfully read build.js content.');
 
-        // Updated and more flexible regex to find the exportOptions block
-        const exportOptionsRegex = /const\s+exportOptions\s+=\s+\{[^}]*method:\s*'[^']+',/;
+        // Target the section where exportOptions is built inside module.exports.run function
+        const exportOptionsRegex = /const\s+exportOptions\s*=\s*\{([^}]+)\};/g;
 
-        const match = buildJsContent.match(exportOptionsRegex);
+        const match = exportOptionsRegex.exec(buildJsContent);
         if (!match) {
             console.error('🚨 Could not find exportOptions block in build.js.');
-            console.log('🔍 Here is a snippet from build.js for inspection:\n', buildJsContent.slice(0, 2000)); // Print the first 2000 chars for inspection
+            console.log('🔍 Here is a larger snippet from build.js for inspection:\n', buildJsContent.slice(0, 4000)); // Print the first 4000 chars for inspection
             return;
         }
 
@@ -61,7 +61,7 @@ module.exports = function (context) {
 
         // Inject the provisioning profiles into the exportOptions object
         const modifiedBuildJsContent = buildJsContent.replace(
-            exportOptionsRegex,
+            match[0],
             match[0] + provisioningProfileBlock
         );
 
