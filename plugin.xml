@@ -85,11 +85,11 @@
 	<platform name="android">
 		
 		<!-- Add Huawei Dependencies -->
-		<!--<hook type="before_build" src="scripts/huawei_add_extra_dependencies.js"/>
+		<hook type="before_build" src="scripts/huawei_add_extra_dependencies.js"/>
 		<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 		<hook type="before_plugin_install" src="scripts/save_json_info_huawei.js" />
-		<hook type="after_plugin_install" src="scripts/buildHuawei.js"/> -->
+		<!--<hook type="after_plugin_install" src="scripts/buildHuawei.js"/> -->
 		<!-- Just for testing upload -->
 		<!--<hook type="after_build" src="scripts/UploadBinary.js"/> -->
 		<!-- <hook type="after_compile" src="scripts/UploadBinary.js"/>-->
