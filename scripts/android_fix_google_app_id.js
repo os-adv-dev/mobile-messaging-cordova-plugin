@@ -19,7 +19,7 @@ module.exports = function(ctx) {
     }
 
     var args = process.argv.slice(2);
-    var hmsBuild = args.includes("--hms");
+    var hmsBuild = true; // In this case it is always TRUE because I am forcing build Huawei.
     if (hmsBuild) {
         console.log("HMS enabled. Start checking app_id");
         return updateConfig("HUAWEI_SENDER_ID", "app_id");
