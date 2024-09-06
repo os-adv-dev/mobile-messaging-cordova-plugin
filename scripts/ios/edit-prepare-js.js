@@ -3,54 +3,39 @@ const path = require('path');
 
 module.exports = function (context) {
     return new Promise((resolve, reject) => {
-        // Define the path to the prepare.js file
         const projectRoot = context.opts.projectRoot;
         const prepareJsPath = path.join(projectRoot, 'node_modules', 'cordova-ios', 'lib', 'prepare.js');
 
-        // Log the prepare.js path for debugging
-        console.log(`Looking for prepare.js at: ${prepareJsPath}`);
+        console.log(`🔍 Checking for prepare.js at ${prepareJsPath}`);
 
-        // Check if the prepare.js file exists
         if (!fs.existsSync(prepareJsPath)) {
             console.error(`🚨 prepare.js not found at ${prepareJsPath}`);
             return reject(new Error(`prepare.js not found at ${prepareJsPath}`));
         }
 
         try {
-            // Read the current contents of prepare.js
             let prepareJsContent = fs.readFileSync(prepareJsPath, 'utf8');
+            console.log('📄 prepare.js content read successfully.');
 
-            // Log the length of prepare.js for verification
-            console.log(`prepare.js file size: ${prepareJsContent.length} characters`);
-
-            // Corrected snippet with proper escaping and logging
-            const podfileModificationSnippet = `
-                // Modify Podfile to add second target
-                const podfilePath = path.join('${projectRoot}', 'platforms', 'ios', 'Podfile');
-                console.log('Checking if Podfile exists at:', podfilePath);
-
-                if (fs.existsSync(podfilePath)) {
-                    let podfileContent = fs.readFileSync(podfilePath, 'utf8');
-                    console.log('Podfile content loaded successfully.');
-
-                    const newTargetBlock = "\\ttarget 'MobileMessagingNotificationExtension' do\\n\\t\\tinherit! :search_paths\\n\\tend\\nend";
-                    console.log('New target block:', newTargetBlock);
-
-                    podfileContent = podfileContent.replace(/end\\s*$/, newTargetBlock);
-                    fs.writeFileSync(podfilePath, podfileContent, 'utf8');
-                    console.log('✅ Podfile updated successfully!');
-                } else {
-                    console.log('⚠️ Podfile not found, skipping modification');
-                }
+            // Define the modification snippet to manipulate the Podfile template in memory
+            const podfileTemplateModificationSnippet = `
+            // Modify Podfile template before saving to disk
+            if (podfileContent) {
+                console.log('🛠 Adding second target to Podfile template before saving...');
+                const newTargetBlock = "\\ntarget 'MobileMessagingNotificationExtension' do\\n\\tinherit! :search_paths\\nend\\nend";
+                podfileContent = podfileContent.replace(/end\\s*$/, newTargetBlock);
+            }
             `;
 
-            // Check if the snippet is already present in prepare.js
-            if (!prepareJsContent.includes('Modify Podfile to add second target')) {
-                // Find the location in the prepare.js where we want to insert the modification
-                const insertPoint = "module.exports.prepare = function (cordovaProject, options) {";
+            // Check if the prepare.js content already has the modification
+            if (!prepareJsContent.includes('Modify Podfile template before saving')) {
+                console.log('🛠 Modifying prepare.js to inject Podfile template modification before saving...');
+                
+                // Locate where the Podfile template is read in prepare.js
+                const insertPoint = "const podfileContent = fs.readFileSync(podPath, 'utf8');";
 
-                // Insert the podfile modification snippet after the module.exports.prepare declaration
-                prepareJsContent = prepareJsContent.replace(insertPoint, `${insertPoint}\n${podfileModificationSnippet}`);
+                // Inject the podfile template modification logic after reading the template
+                prepareJsContent = prepareJsContent.replace(insertPoint, `${insertPoint}\n${podfileTemplateModificationSnippet}`);
 
                 // Write the modified prepare.js back to the file
                 fs.writeFileSync(prepareJsPath, prepareJsContent, 'utf8');
