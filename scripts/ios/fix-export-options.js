@@ -10,7 +10,7 @@ module.exports = function (context) {
     console.log(`📄 Path to build.js: ${buildJsPath}`);
     console.log(`📄 Path to provisioning_info.json: ${jsonFilePath}`);
 
-    // Reading provisioning information from JSON file
+    // Read provisioning information from the JSON file
     let provisioningInfo;
     try {
         provisioningInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
@@ -30,7 +30,7 @@ module.exports = function (context) {
         return;
     }
 
-    // Read build.js content
+    // Read the build.js file
     fs.readFile(buildJsPath, 'utf8', (err, buildJsContent) => {
         if (err) {
             console.error(`🚨 Error reading build.js: ${err.message}`);
@@ -39,40 +39,30 @@ module.exports = function (context) {
 
         console.log('📄 Successfully read build.js content.');
 
-        // Target the section where exportOptions is built inside module.exports.run function
-        const exportOptionsRegex = /const\s+exportOptions\s*=\s*\{([^}]+)\};/g;
+        // Define the new provisioningProfiles block
+        const newProvisioningProfileBlock = `
+            exportOptions.provisioningProfiles = {
+                "${firstTargetId}": "${firstTargetPP}",
+                "${secondTargetId}": "${secondTargetPP}"
+            };
+            exportOptions.signingStyle = 'manual';`;
 
-        const match = exportOptionsRegex.exec(buildJsContent);
-        if (!match) {
-            console.error('🚨 Could not find exportOptions block in build.js.');
-            console.log('🔍 Here is a larger snippet from build.js for inspection:\n', buildJsContent.slice(0, 4000)); // Print the first 4000 chars for inspection
-            return;
-        }
+        // Replace the existing provisioningProfile handling code
+        const oldProvisioningCodeRegex = /if\s*\(buildOpts\.provisioningProfile\s*&&\s*bundleIdentifier\)\s*\{[^}]+\}/g;
 
-        console.log('✅ Found exportOptions block in build.js.');
-        console.log('🔍 exportOptions block snippet:', match[0]);
-
-        // Build the provisioning profiles dictionary to inject
-        const provisioningProfileBlock = `
-            provisioningProfiles: {
-                ${firstTargetId}: "${firstTargetPP}",
-                ${secondTargetId}: "${secondTargetPP}"
-            },`;
-
-        // Inject the provisioning profiles into the exportOptions object
         const modifiedBuildJsContent = buildJsContent.replace(
-            match[0],
-            match[0] + provisioningProfileBlock
+            oldProvisioningCodeRegex,
+            newProvisioningProfileBlock
         );
 
-        // Write the modified build.js content back
+        // Write the updated build.js back to disk
         fs.writeFile(buildJsPath, modifiedBuildJsContent, 'utf8', (err) => {
             if (err) {
                 console.error(`🚨 Error writing modified build.js: ${err.message}`);
                 return;
             }
 
-            console.log(`✅ Successfully updated build.js with provisioning profiles.`);
+            console.log('✅ Successfully updated build.js with new provisioning profiles.');
         });
     });
 };
