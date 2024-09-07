@@ -47,7 +47,7 @@ module.exports = function (context) {
             };
             exportOptions.signingStyle = 'manual';`;
 
-        // String to remove (the entire block you mentioned)
+        // String to remove
         const oldProvisioningBlock = `
             if (buildOpts.provisioningProfile && bundleIdentifier) {
                 if (typeof buildOpts.provisioningProfile === 'string') {
