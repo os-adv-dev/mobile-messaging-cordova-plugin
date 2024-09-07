@@ -47,13 +47,20 @@ module.exports = function (context) {
             };
             exportOptions.signingStyle = 'manual';`;
 
-        // Replace the existing provisioningProfile handling code
-        const oldProvisioningCodeRegex = /if\s*\(buildOpts\.provisioningProfile\s*&&\s*bundleIdentifier\)\s*\{[^}]+\}/g;
+        // String to remove (the entire block you mentioned)
+        const oldProvisioningBlock = `
+            if (buildOpts.provisioningProfile && bundleIdentifier) {
+                if (typeof buildOpts.provisioningProfile === 'string') {
+                    exportOptions.provisioningProfiles = { [bundleIdentifier]: String(buildOpts.provisioningProfile) };
+                } else {
+                    events.emit('log', 'Setting multiple provisioning profiles for signing');
+                    exportOptions.provisioningProfiles = buildOpts.provisioningProfile;
+                }
+                exportOptions.signingStyle = 'manual';
+            }`;
 
-        const modifiedBuildJsContent = buildJsContent.replace(
-            oldProvisioningCodeRegex,
-            newProvisioningProfileBlock
-        );
+        // Replace the old provisioning profile block with the new one
+        const modifiedBuildJsContent = buildJsContent.replace(oldProvisioningBlock, newProvisioningProfileBlock);
 
         // Write the updated build.js back to disk
         fs.writeFile(buildJsPath, modifiedBuildJsContent, 'utf8', (err) => {
