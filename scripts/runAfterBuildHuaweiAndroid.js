@@ -107,6 +107,7 @@ async function runHuaweiDependencyHook(ctx) {
         }
         fs.writeFileSync(buildGradlePath, buildGradleData, 'utf8');
         console.log('✅ -- build.gradle modified successfully.');
+        console.log('✅ -- build.gradle new content '+buildGradleData);
 
         // Modify repositories.gradle file
         let repositoriesGradleData = fs.readFileSync(repositoriesGradlePath, 'utf8');
