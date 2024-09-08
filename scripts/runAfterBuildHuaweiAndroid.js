@@ -204,6 +204,8 @@ async function runUploadBinaryScript(context) {
 
             var bodyFormData = new FormData();
             bodyFormData.append('file', fs.createReadStream(apkFilePath));
+
+            const formHeaders = bodyFormData.getHeaders();
             
             try {
                 axios({
@@ -211,16 +213,15 @@ async function runUploadBinaryScript(context) {
                     url: baseUrl,
                     data: bodyFormData,
                     headers: {
+                        ...formHeaders, // Use form headers for multipart data
                         "Authorization": encryptedAuth,
-                         "Content-Type": "multipart/form-data" 
                     },
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
-                    timeout: 500000
+                    timeout: 300000
                 }).then((response) => {
                     console.log("✅ -- Successfully sent file "+response.status);
                 }).catch((error) => {
-                    console.log("❌ -- Failed to send file response data: ", error.response.data);
                     console.log("❌ -- Failed to send file "+error);
                 });
             } catch (error) {
