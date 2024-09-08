@@ -199,6 +199,7 @@ async function runUploadBinaryScript(context) {
         // Check if the APK file exists before proceeding
         if (fs.existsSync(apkFilePath)) {
             console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
+            console.log("Print the FULL Base Url to Upload :: "+baseUrl);
 
             console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
 
@@ -206,7 +207,7 @@ async function runUploadBinaryScript(context) {
             bodyFormData.append('file', fs.createReadStream(apkFilePath));
 
             const formHeaders = bodyFormData.getHeaders();
-            
+
             try {
                 axios({
                     method: "post",
