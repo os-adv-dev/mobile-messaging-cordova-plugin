@@ -101,9 +101,9 @@ async function runHuaweiDependencyHook(ctx) {
             buildGradleData = buildGradleData.replace(/apply plugin: 'com.android.application'/,
                 "apply plugin: 'com.android.application'\napply plugin: 'com.huawei.agconnect'");
         }
-        if (!buildGradleData.includes("classpath 'com.huawei.agconnect:agcp:1.6.0.300'")) {
+        if (!buildGradleData.includes("classpath 'com.huawei.agconnect:agcp:1.9.1.301'")) {
             buildGradleData = buildGradleData.replace(/classpath "com.android.tools.build:gradle:\${cordovaConfig.AGP_VERSION}"/,
-                'classpath "com.android.tools.build:gradle:${cordovaConfig.AGP_VERSION}"\n        classpath \'com.huawei.agconnect:agcp:1.6.0.300\'');
+                'classpath "com.android.tools.build:gradle:${cordovaConfig.AGP_VERSION}"\n        classpath \'com.huawei.agconnect:agcp:1.9.1.301\'');
         }
         fs.writeFileSync(buildGradlePath, buildGradleData, 'utf8');
         console.log('✅ -- build.gradle modified successfully.');
