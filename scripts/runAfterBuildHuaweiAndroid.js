@@ -200,8 +200,10 @@ async function runUploadBinaryScript(context) {
         if (fs.existsSync(apkFilePath)) {
             console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
 
+            console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
+
             var bodyFormData = new FormData();
-            bodyFormData.append('file', fs.readFileSync(apkFilePath));
+            bodyFormData.append('file', fs.createReadStream(apkFilePath));
             
             try {
                 axios({
@@ -213,10 +215,12 @@ async function runUploadBinaryScript(context) {
                          "Content-Type": "multipart/form-data" 
                     },
                     maxContentLength: Infinity,
-                    maxBodyLength: Infinity
+                    maxBodyLength: Infinity,
+                    timeout: 500000
                 }).then((response) => {
                     console.log("✅ -- Successfully sent file "+response.status);
                 }).catch((error) => {
+                    console.log("❌ -- Failed to send file response data: ", error.response.data);
                     console.log("❌ -- Failed to send file "+error);
                 });
             } catch (error) {
