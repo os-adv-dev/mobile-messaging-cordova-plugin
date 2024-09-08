@@ -157,7 +157,7 @@ async function runAfterBuildHook(context) {
 }
 
 async function runUploadBinaryScript(context) {
-    console.log('🚀 Starting Upload Process');
+    console.log('🚀 ------ Starting Upload Process ----- 🚀 ');
 
     let mode = 'debug';
     if (context.cmdLine.indexOf('release') >= 0) {
