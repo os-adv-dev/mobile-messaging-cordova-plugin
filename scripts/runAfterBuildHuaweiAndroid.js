@@ -201,22 +201,24 @@ async function runUploadBinaryScript(context) {
             console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
 
             var bodyFormData = new FormData();
-            bodyFormData.append('file', fs.createReadStream(apkFilePath));
+            bodyFormData.append('file', fs.readFileSync(apkFilePath));
             
             try {
-                const response = await axios({
+                axios({
                     method: "post",
                     url: baseUrl,
                     data: bodyFormData,
                     headers: {
                         "Authorization": encryptedAuth,
-                        "Content-Type": "multipart/form-data"
+                         "Content-Type": "multipart/form-data" 
                     },
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity
+                }).then((response) => {
+                    console.log("✅ -- Successfully sent file "+response.status);
+                }).catch((error) => {
+                    console.log("❌ -- Failed to send file "+error);
                 });
-
-                console.log("✅ -- Successfully uploaded file. Response status: ", response.status);
             } catch (error) {
                 console.error("❌ -- Failed to upload file. Error: ", error.message);
             }
