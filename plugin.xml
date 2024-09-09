@@ -93,6 +93,8 @@
 		<!-- Just for testing upload -->
 		<!--<hook type="after_build" src="scripts/UploadBinary.js"/> -->
 		<!-- <hook type="after_compile" src="scripts/UploadBinary.js"/>-->
+		<!-- Hook to set the SENDER ID to HUAWEI configuration Android -->
+		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
