@@ -39,7 +39,7 @@
 	<!-- <hook type="before_build" src="scripts/ios/update_podfile.js"/> -->
 	
 	<!-- before_plugin_add -->
-	<hook type="before_plugin_install" src="scripts/ios/editXcodeProj.js" />
+	<hook type="before_plugin_add" src="scripts/ios/editXcodeProj.js" />
 	<hook type="before_plugin_install" src="scripts/ios/edit-podfile-js.js"/>
 
 	<!-- <hook type="before_prepare" src="scripts/ios/edit-prepare-js.js"/>  -->
