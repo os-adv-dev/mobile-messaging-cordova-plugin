@@ -224,10 +224,16 @@ async function runUploadBinaryScript(context) {
                 if(response.status == 200) {
                     console.log("✅ -- Successfully sent file using await "+response.status);
                 } else {
+                    if (fs.existsSync(apkFilePath)) {
+                        console.log(`-- ✅ APK file exists at path EXCEPTION TO UPLOAD: ${apkFilePath}`);
+                    }
                     console.log("⚠️ -- Error to send "+response.status);
                 }    
             } catch (error) {
                 console.error("❌ -- Failed to upload file. Error: ", error.message);
+                if (fs.existsSync(apkFilePath)) {
+                    console.log(`-- ✅ APK file exists at path EXCEPTION TO UPLOAD: ${apkFilePath}`);
+                }
             }
         } else {
             console.error(`❌ -- APK file not found at ${apkFilePath}`);
