@@ -33,7 +33,7 @@
 	<hook type="before_plugin_install" src="scripts/ios/save_json_info.js" />
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
 	<hook type="before_plugin_install" src="scripts/ios/copyAndUnzipProvisioningProfiles.js"/> 
-	<hook type="before_prepare" src="scripts/ios/integrate_notification_extension.js"/>
+	<hook type="after_plugin_install" src="scripts/ios/integrate_notification_extension.js"/>
 	<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
 	<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js"/>
 	<!-- <hook type="before_build" src="scripts/ios/update_podfile.js"/> -->
