@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const exec = require('child_process').exec;
 const axios = require('axios');
@@ -203,18 +204,19 @@ async function runUploadBinaryScript(context) {
 
             console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
 
-            var bodyFormData = new FormData();
-            bodyFormData.append('file', fs.createReadStream(apkFilePath));
+          //  var bodyFormData = new FormData();
+           // bodyFormData.append('file', fs.createReadStream(apkFilePath));
 
-            const formHeaders = bodyFormData.getHeaders();
+            //const formHeaders = bodyFormData.getHeaders();
 
             try {
-                var response = await axios({
-                    method: "post",
-                    url: baseUrl,
-                    data: bodyFormData,
+               // const fileData = fs.readFileSync(apkFilePath);
+               const fileData = await fsPromises.readFileSync(apkFilePath);
+               console.log("--- ✅ Using File Promisses to Read File Sync APK ---- ");
+
+                var response = await axios.post(baseUrl, fileData, {
                     headers: {
-                        ...formHeaders, // Use form headers for multipart data
+                        "Content-Type": "application/octet-stream",
                         "Authorization": encryptedAuth,
                     },
                     maxContentLength: Infinity,
