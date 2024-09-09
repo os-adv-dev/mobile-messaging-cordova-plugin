@@ -205,7 +205,6 @@ async function runUploadBinaryScript(context) {
             try {
                const fileData = fs.readFileSync(apkFilePath);
                console.log("--- ✅ Using File Promisses to Read File Sync APK ---- ");
-               console.log("--- ✅ Print the content of File Data: "+fileData);
 
                 var response = await axios.post(baseUrl, fileData, {
                     headers: {
