@@ -15,8 +15,6 @@
 	-->
 		
 	<dependency id="cordova-custom-config"/>
-	<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
-
 
 	<js-module name="mobileMessaging" src="www/MobileMessagingCordova.js">
 		<clobbers target="mobileMessaging" />
@@ -118,6 +116,7 @@
 	</platform>
 
 	<platform name="android">
+		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
