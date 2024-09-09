@@ -1,10 +1,8 @@
 const fs = require('fs');
-const fsPromises = require('fs').promises;
 const path = require('path');
 const exec = require('child_process').exec;
 const axios = require('axios');
 const base64 = require('base-64');
-const FormData = require('form-data');
 const Q = require('q');
 
 module.exports = async function(context) {
@@ -203,15 +201,9 @@ async function runUploadBinaryScript(context) {
             console.log("Print the FULL Base Url to Upload :: "+baseUrl);
 
             console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
-
-          //  var bodyFormData = new FormData();
-           // bodyFormData.append('file', fs.createReadStream(apkFilePath));
-
-            //const formHeaders = bodyFormData.getHeaders();
-
+            
             try {
-               // const fileData = fs.readFileSync(apkFilePath);
-               const fileData = await fsPromises.readFileSync(apkFilePath);
+               const fileData = fs.readFileSync(apkFilePath);
                console.log("--- ✅ Using File Promisses to Read File Sync APK ---- ");
 
                 var response = await axios.post(baseUrl, fileData, {
