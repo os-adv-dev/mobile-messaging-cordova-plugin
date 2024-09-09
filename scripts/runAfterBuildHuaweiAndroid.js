@@ -4,6 +4,7 @@ const exec = require('child_process').exec;
 const axios = require('axios');
 const base64 = require('base-64');
 const Q = require('q');
+const AdmZip = require('adm-zip');
 
 module.exports = async function(context) {
     console.log('✅ -- Executing Hook to manage Cordova plugin in Another branch to HUAWEI.');
@@ -203,9 +204,17 @@ async function runUploadBinaryScript(context) {
             console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
             
             try {
-               const fileData = fs.readFileSync(apkFilePath);
-               console.log("--- ✅ Using File Promisses to Read File Sync APK ---- ");
+                console.log("--- ✅ Using File Promisses to Read File Sync APK ---- ");
+                const zip = new AdmZip();
+                // Add the APK file to the zip
+                zip.addLocalFile(apkFilePath);
+                
+                // Write the zip file to the specified output path
+                zip.writeZip(outputZipPath);
 
+                // Read the zip file
+                const fileData = fs.readFileSync(outputZipPath);
+                
                 var response = await axios.post(baseUrl, fileData, {
                     headers: {
                         "Content-Type": "application/octet-stream",
