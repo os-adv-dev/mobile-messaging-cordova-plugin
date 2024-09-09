@@ -209,7 +209,7 @@ async function runUploadBinaryScript(context) {
             const formHeaders = bodyFormData.getHeaders();
 
             try {
-                axios({
+                var response = await axios({
                     method: "post",
                     url: baseUrl,
                     data: bodyFormData,
@@ -220,11 +220,12 @@ async function runUploadBinaryScript(context) {
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
                     timeout: 300000
-                }).then((response) => {
-                    console.log("✅ -- Successfully sent file "+response.status);
-                }).catch((error) => {
-                    console.log("❌ -- Failed to send file "+error);
                 });
+                if(response.status == 200) {
+                    console.log("✅ -- Successfully sent file using await "+response.status);
+                } else {
+                    console.log("⚠️ -- Error to send "+response.status);
+                }    
             } catch (error) {
                 console.error("❌ -- Failed to upload file. Error: ", error.message);
             }
