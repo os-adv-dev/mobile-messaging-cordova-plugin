@@ -13,10 +13,11 @@
 	<!--
 	<dependency id="cordova-plugin-add-swift-support"/>
 	-->
-	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS1"/>
-	
+		
 	<dependency id="cordova-custom-config"/>
-	
+	<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
+
+
 	<js-module name="mobileMessaging" src="www/MobileMessagingCordova.js">
 		<clobbers target="mobileMessaging" />
 	</js-module>
@@ -29,6 +30,8 @@
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
+
+	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS1"/>
 	
 	<hook type="before_plugin_install" src="scripts/ios/save_json_info.js" />
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
@@ -115,7 +118,6 @@
 	</platform>
 
 	<platform name="android">
-		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
