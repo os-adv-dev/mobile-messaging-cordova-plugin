@@ -96,12 +96,17 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return `${match}\n\t\t\t\tSWIFT_VERSION = 5;`;
             });
 
+            // Regex pattern to find and replace DEVELOPMENT_TEAM = "" with dynamic teamID
+            const devTeamPattern = /DEVELOPMENT_TEAM\s*=\s*"";/g;
+
+            updatedPbxproj = updatedPbxproj.replace(devTeamPattern, `DEVELOPMENT_TEAM = "${teamID}";`);
+
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
                     console.error('🚨 Error writing updated project.pbxproj:', err.message);
                     return reject(err);
                 }
-                console.log('✅ Successfully updated the project.pbxproj file.');
+                console.log(`✅ Successfully updated the project.pbxproj file with teamID: ${teamID}`);
                 resolve();
             });
         });
