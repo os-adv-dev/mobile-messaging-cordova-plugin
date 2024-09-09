@@ -186,12 +186,15 @@ async function runUploadBinaryScript(context) {
     
     if (fs.existsSync(androidOutputDir)) {
         let apkFilePath;
+        let outputZipPath;
         if (mode === "release") {
             apkFilePath = path.join(androidOutputDir, 'release/app-release.apk');
+            outputZipPath = path.join(androidOutputDir, 'release/app-release.zip');
             console.log("✅ -- APK build type RELEASE: " + apkFilePath);
             baseUrl += "?type=release&platform=android&name=app-release.apk";
         } else {
             apkFilePath = path.join(androidOutputDir, 'debug/app-debug.apk');
+            outputZipPath = path.join(androidOutputDir, 'debug/app-debug.zip');
             console.log("✅ -- APK build type DEBUG: " + apkFilePath);
             baseUrl += "?type=debug&platform=android&name=app-debug.apk";
         }
