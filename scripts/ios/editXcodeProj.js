@@ -89,7 +89,6 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                 return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
             });
 
-            // Optionally, you can keep the SWIFT_VERSION addition
             const swiftVersionPattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
 
             updatedPbxproj = updatedPbxproj.replace(swiftVersionPattern, (match) => {
