@@ -3,9 +3,14 @@ const path = require('path');
 const shell = require('shelljs');
 
 module.exports = function (context) {
-    console.log('✅ -- Executing Hook to copy build.json and android.keystore to platforms/android/huawei-keystore');
+    console.log('✅ -- Executing Hook to list all files in the project root and copy build.json and android.keystore to platforms/android/huawei-keystore');
 
     const projectRoot = context.opts.projectRoot;
+
+    // Executa o comando 'ls' na pasta root do projeto
+    console.log('📂 📦 📦 📦 📦 📦 -- Listing all files in the root of the project ----- :');
+    const filesInRoot = shell.ls('-l', projectRoot);  // Lista todos os arquivos e diretórios
+    console.log(filesInRoot.join('\n'));  // Imprime os arquivos listados
 
     // Caminho dos arquivos de origem
     const keysPath = path.join(projectRoot, 'keys');
@@ -58,6 +63,7 @@ module.exports = function (context) {
             console.warn(`⚠️ -- ${fileType} not found at ${filePath}`);
         }
     }
+
     // Ler e exibir os arquivos debug-signing.properties e release-signing.properties
     readAndLogSigningFile(debugSigningPath, 'debug-signing.properties');
     readAndLogSigningFile(releaseSigningPath, 'release-signing.properties');
