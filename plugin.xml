@@ -92,6 +92,9 @@
 		<!-- Hook to set the SENDER ID to HUAWEI configuration Android -->
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 
+		<!-- Execut BUILD Android no HUAWEI below-->
+		<hook type="after_build" src="scripts/runAfterBuildAndroidWithoutHuawei.js"/>
+
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
 				<param name="android-package" value="org.apache.cordova.plugin.MobileMessagingCordova"/>
@@ -113,7 +116,7 @@
 		</config-file>
 
 		<framework src="libs/android/mobile-messaging-aar.gradle" custom="true" type="gradleReference" />
-		<framework src="libs/android/change-apk-name-huawei.gradle" custom="true" type="gradleReference" />
+		<!--<framework src="libs/android/change-apk-name-huawei.gradle" custom="true" type="gradleReference" /> -->
 		<framework src="com.google.android.material:material:1.4.0"/>
 		<framework src="androidx.exifinterface:exifinterface:1.3.3"/>
 		<source-file src="src/android/MobileMessagingCordova.java" target-dir="src/org/apache/cordova/plugin"/>
