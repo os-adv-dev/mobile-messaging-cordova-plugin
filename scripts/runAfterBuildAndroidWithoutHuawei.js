@@ -53,17 +53,27 @@ module.exports = function(context) {
 
 function runAfterBuildHook(context) {
     const deferred = Q.defer();
-    console.log('✅ -- RUN BUILD APP WITHOUT HUAWEI NORML APK TO USE IN QR CODE --');
+    console.log('✅ -- RUN BUILD APP WITHOUT HUAWEI NORMAL APK TO USE IN QR CODE --');
     
     const isDebug = context.cmdLine.includes('debug');
-    const gradlewPath = path.join(context.opts.projectRoot, 'platforms/android/gradlew');
-    const platformRoot = path.join(context.opts.projectRoot, 'platforms/android');
-    
-    // Define o comando com base se é debug ou release
-    const gradleCommand = isDebug ? `${gradlewPath} cdvBuildDebug` : `${gradlewPath} cdvBuildRelease`;
+    const projectRoot = context.opts.projectRoot;
+    const gradlewPath = path.join(projectRoot, 'platforms/android/gradlew');
+    const platformRoot = path.join(projectRoot, 'platforms/android');
     
     console.log(`📂  📦  📦  📦 ------  Starting Gradle build: ${isDebug ? 'Debug' : 'Release'}...`);
 
+    // Define the command based on whether it's debug or release
+    const gradleCommand = isDebug ? `${gradlewPath} cdvBuildDebug` : `${gradlewPath} cdvBuildRelease`;    
+
+    // Save the current directory
+    const initialDir = process.cwd();
+    console.log(`✅ -- Initial directory: ${initialDir}`);
+
+    // Change to the correct directory (platforms/android)
+    process.chdir(platformRoot);
+    console.log(`✅ -- Changed directory to: ${process.cwd()}`);
+
+    // Execute the Gradle command
     execShellCommand(gradleCommand)
         .then(buildOutput => {
             console.log(`📦 -- Gradle Build Output:\n${buildOutput}`);
@@ -72,10 +82,15 @@ function runAfterBuildHook(context) {
             console.log(`📦 -- buildOutputPath Output:\n${buildOutputPath}`);
         })
         .then(() => {
+            // Change back to the initial directory after the command execution
+            process.chdir(initialDir);
+            console.log(`✅ -- Reverted back to initial directory: ${initialDir}`);
             deferred.resolve();
         })
         .catch(error => {
             console.error(`❌ -- Error during build hook: ${error}`);
+            // Always revert back to the initial directory on error
+            process.chdir(initialDir);
             deferred.reject(error);
         });
 
