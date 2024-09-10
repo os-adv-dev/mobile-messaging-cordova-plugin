@@ -1,0 +1,10 @@
+
+// This gradle configuration is needed to change the huawei APK File generated to not have conflict with APK generated from MABS.
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        def baseName = "huawei-app"
+        def variantName = variant.name
+        def newApkName = "${baseName}-${variantName}.apk"
+        outputFileName = newApkName
+    }
+}
