@@ -1,3 +1,5 @@
+.DS_Store
+
 # Installed node modules
 /node_modules/
 

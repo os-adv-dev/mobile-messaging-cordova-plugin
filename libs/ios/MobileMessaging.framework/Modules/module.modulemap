@@ -1,0 +1,15 @@
+framework module MobileMessaging {
+	umbrella header "MobileMessaging-umbrella.h"
+	
+	export *
+
+	explicit module Private {
+		private header "SwiftTryCatch.h"
+	}
+
+}
+
+module MobileMessaging.Swift {
+  header "MobileMessaging-Swift.h"
+  requires objc
+}
