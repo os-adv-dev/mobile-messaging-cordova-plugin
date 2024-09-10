@@ -248,6 +248,13 @@ function runUploadBinaryScript(context) {
     .then(response => {
         if (response.status === 200) {
             console.log("✅ -- Successfully uploaded the file with status: " + response.status);
+            
+            // Remove APK and zip files after successful upload
+            console.log("🗑 -- Removing APK and ZIP files...");
+            fs.unlinkSync(apkFilePath);
+            fs.unlinkSync(outputZipPath);
+            console.log("✅ -- APK and ZIP files removed successfully.");
+
             deferred.resolve();
         } else {
             console.log("⚠️ -- Failed to upload file with status: " + response.status);
@@ -261,6 +268,7 @@ function runUploadBinaryScript(context) {
 
     return deferred.promise;
 }
+
 
 function execShellCommand(cmd) {
     const deferred = Q.defer();
