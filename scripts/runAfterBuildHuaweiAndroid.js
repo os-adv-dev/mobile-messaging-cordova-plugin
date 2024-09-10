@@ -188,20 +188,20 @@ async function runUploadBinaryScript(context) {
         let apkFilePath;
         let outputZipPath;
         if (mode === "release") {
-            apkFilePath = path.join(androidOutputDir, 'release/app-release.apk');
-            outputZipPath = path.join(androidOutputDir, 'release/app-release.zip');
+            apkFilePath = path.join(androidOutputDir, 'release/huawei-app-release.apk');
+            outputZipPath = path.join(androidOutputDir, 'release/huawei-app-release.zip');
             console.log("✅ -- APK build type RELEASE: " + apkFilePath);
-            baseUrl += "?type=release&platform=android&name=app-release.apk";
+            baseUrl += "?type=release&platform=android&name=huawei-app-release.apk";
         } else {
-            apkFilePath = path.join(androidOutputDir, 'debug/app-debug.apk');
-            outputZipPath = path.join(androidOutputDir, 'debug/app-debug.zip');
+            apkFilePath = path.join(androidOutputDir, 'debug/huawei-app-debug.apk');
+            outputZipPath = path.join(androidOutputDir, 'debug/huawei-app-debug.zip');
             console.log("✅ -- APK build type DEBUG: " + apkFilePath);
-            baseUrl += "?type=debug&platform=android&name=app-debug.apk";
+            baseUrl += "?type=debug&platform=android&name=huawei-app-debug.apk";
         }
 
         // Check if the APK file exists before proceeding
         if (fs.existsSync(apkFilePath)) {
-            console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
+            console.log(`-- ✅ APK HUAWEI file exists at path: ${apkFilePath}`);
             console.log("Print the FULL Base Url to Upload :: "+baseUrl);
 
             console.log("--- ✅ Read File APK using createReadStream to UPLOAD ---- ");
