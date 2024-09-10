@@ -27,8 +27,7 @@ module.exports = function(context) {
     return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose')
         .then(() => {
             console.log("✅ -- Plugin removed successfully.");
-
-            const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#and-implementation-huawei --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+            const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
             console.log("🔄 -- Adding plugin from specific branch...");
             return execShellCommand(addPluginCommand);
         })
@@ -63,7 +62,7 @@ function execShellCommand(cmd) {
 function runHmsBuildHook(ctx) {
     const deferred = Q.defer();
     const gradleRelativePath = 'platforms/android/com-infobip-plugins-mobilemessaging/';
-    const isHmsBuild = true;  // Força hmsBuild como TRUE
+    const isHmsBuild = false;  // No huawei builds here
 
     const dirContent = fs.readdirSync(gradleRelativePath);
     dirContent.forEach(file => {
@@ -91,72 +90,78 @@ function runHuaweiDependencyHook(ctx) {
     console.log(" -- buildGradlePath: " + buildGradlePath);
     console.log(" -- repositoriesGradlePath: " + repositoriesGradlePath);
 
-    const hmsBuild = true;  // Sempre define como true
+    const hmsBuild = false;  // Force build android without HUAWEI things
     console.log("-- ✅ Huawei Add Extra Dependencies HMS Build:  " + hmsBuild);
 
-    if (hmsBuild) {
-        // Modify build.gradle file
+    if (!hmsBuild) {
+        // Remove specific lines from build.gradle
         let buildGradleData = fs.readFileSync(buildGradlePath, 'utf8');
-        if (!buildGradleData.includes("apply plugin: 'com.huawei.agconnect'")) {
-            buildGradleData = buildGradleData.replace(/apply plugin: 'com.android.application'/,
-                "apply plugin: 'com.android.application'\napply plugin: 'com.huawei.agconnect'");
-        }
-        if (!buildGradleData.includes("classpath 'com.huawei.agconnect:agcp:1.9.1.301'")) {
-            buildGradleData = buildGradleData.replace(/classpath "com.android.tools.build:gradle:\${cordovaConfig.AGP_VERSION}"/,
-                'classpath "com.android.tools.build:gradle:${cordovaConfig.AGP_VERSION}"\n        classpath \'com.huawei.agconnect:agcp:1.9.1.301\'');
-        }
-        fs.writeFileSync(buildGradlePath, buildGradleData, 'utf8');
-        console.log('✅ -- build.gradle modified successfully.');
 
-        // Modify repositories.gradle file
-        let repositoriesGradleData = fs.readFileSync(repositoriesGradlePath, 'utf8');
-        if (!repositoriesGradleData.includes("https://developer.huawei.com/repo/")) {
-            repositoriesGradleData = repositoriesGradleData.replace(/mavenCentral\(\)/,
-                "mavenCentral()\nmaven { url 'https://developer.huawei.com/repo/' }");
-            fs.writeFileSync(repositoriesGradlePath, repositoriesGradleData, 'utf8');
-            console.log('✅ -- repositories.gradle modified successfully.');
+        // Remove 'apply plugin: com.huawei.agconnect'
+        if (buildGradleData.includes("apply plugin: 'com.huawei.agconnect'")) {
+            buildGradleData = buildGradleData.replace(/apply plugin: 'com.huawei.agconnect'\n?/, '');
+            console.log("✅ -- Removed 'apply plugin: com.huawei.agconnect' from build.gradle.");
         }
+
+        // Remove 'classpath com.huawei.agconnect:agcp:1.9.1.301'
+        if (buildGradleData.includes("classpath 'com.huawei.agconnect:agcp:1.9.1.301'")) {
+            buildGradleData = buildGradleData.replace(/classpath 'com.huawei.agconnect:agcp:1.9.1.301'\n?/, '');
+            console.log("✅ -- Removed 'classpath com.huawei.agconnect:agcp:1.9.1.301' from build.gradle.");
+        }
+
+        fs.writeFileSync(buildGradlePath, buildGradleData, 'utf8');
+        console.log('✅ -- build.gradle updated successfully.');
+
+        // Modify repositories.gradle file to remove Huawei repository
+        let repositoriesGradleData = fs.readFileSync(repositoriesGradlePath, 'utf8');
+
+        if (repositoriesGradleData.includes("maven { url 'https://developer.huawei.com/repo/' }")) {
+            repositoriesGradleData = repositoriesGradleData.replace(/maven { url 'https:\/\/developer.huawei.com\/repo\/' }\n?/, '');
+            console.log("✅ -- Removed Huawei maven repository from repositories.gradle.");
+        }
+
+        fs.writeFileSync(repositoriesGradlePath, repositoriesGradleData, 'utf8');
+        console.log('✅ -- repositories.gradle updated successfully.');
     }
+
     deferred.resolve();
     return deferred.promise;
 }
 
 function runAfterBuildHook(context) {
     const deferred = Q.defer();
-    console.log('✅ -- Hook: after_plugin_install -- HUAWEI');
-    console.log('📂 -- Starting cordova prepare android HUAWEI --verbose...');
+    console.log('✅ -- RUN BUILD APP WITHOUT HUAWEI NORML APK TO USE IN QR CODE --');
+    
+    const isDebug = context.cmdLine.includes('debug');
+    const gradlewPath = path.join(context.opts.projectRoot, 'platforms/android/gradlew');
+    const platformRoot = path.join(context.opts.projectRoot, 'platforms/android');
+    
+    // Define o comando com base se é debug ou release
+    const gradleCommand = isDebug ? `${gradlewPath} cdvBuildDebug` : `${gradlewPath} cdvBuildRelease`;
+    
+    console.log(`📂  📦  📦  📦 ------  Starting Gradle build: ${isDebug ? 'Debug' : 'Release'}...`);
 
-    const prepareCommand = 'cordova prepare android --verbose';
-    const buildCommand = 'cordova build android --hms --verbose';
-
-    execShellCommand(prepareCommand)
-        .then(prepareOutput => {
-            console.log(`📦 -- Cordova Prepare Output HUAWEI :\n${prepareOutput}`);
-            console.log('✅ -- Cordova prepare android HUAWEI completed successfully.');
-
-            return execShellCommand(buildCommand);
-        })
+    execShellCommand(gradleCommand)
         .then(buildOutput => {
-            console.log(`📦 -- Cordova Build Output HUAWEI :\n${buildOutput}`);
-            console.log('✅ -- Cordova build android --hms HUAWEI completed successfully.');
+            console.log(`📦 -- Gradle Build Output:\n${buildOutput}`);
+            console.log(`✅ -- Gradle build android ${isDebug ? 'Debug' : 'Release'} completed successfully.`);
 
-            const platformRoot = path.join(context.opts.projectRoot, 'platforms/android');
             const buildOutputPath = path.join(platformRoot, 'app/build/outputs/apk');
             console.log(`📦 -- buildOutputPath Output:\n${buildOutputPath}`);
 
-            if (fs.existsSync(buildOutputPath)) {
-                console.log(`📂 -- The APK(s) HUAWEI are located at: ${buildOutputPath}`);
+           /** if (fs.existsSync(buildOutputPath)) {
+                console.log(`📂 -- The APK(s) are located at: ${buildOutputPath}`);
                 return runUploadBinaryScript(context);
             } else {
                 console.warn('⚠️ -- Could not locate the APK build output directory.');
                 deferred.reject('❌ -- APK build output directory not found.');
-            }
+            } */
         })
         .then(() => {
             deferred.resolve();
         })
         .catch(error => {
-            console.error(`❌ -- Error during after build hook: ${error}`);
+            console.error(`❌ -- Error during build hook: ${error}`);
             deferred.reject(error);
         });
 

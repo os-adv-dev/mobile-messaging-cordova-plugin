@@ -87,8 +87,8 @@
 		<hook type="before_plugin_install" src="scripts/save_variables_json.js" />
 		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 		<!-- <hook type="after_compile" src="scripts/runAfterCompileHuawei.js"/> -->
-		<hook type="after_build" src="scripts/runAfterBuildHuaweiAndroid.js"/>
-		<hook type="before_prepare" src="scripts/before_prepare_copy_keystore.js"/>
+		<!--<hook type="after_build" src="scripts/runAfterBuildHuaweiAndroid.js"/>
+		<hook type="before_prepare" src="scripts/before_prepare_copy_keystore.js"/> -->
 
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
