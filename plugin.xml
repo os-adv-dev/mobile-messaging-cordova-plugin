@@ -83,7 +83,8 @@
 	</platform> -->
 
 	<platform name="android">
-		
+		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
+
 		<!-- Add Huawei Dependencies -->
 		<hook type="before_build" src="scripts/huawei_add_extra_dependencies.js"/>
 		<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
