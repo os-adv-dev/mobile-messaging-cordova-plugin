@@ -101,8 +101,10 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
 
             // Add the step to update the LD_RUNPATH_SEARCH_PATHS for the MobileMessagingNotificationExtension target
             updatedPbxproj = updatedPbxproj.replace(
-                /LD_RUNPATH_SEARCH_PATHS\s*=\s*"@executable_path\/Frameworks";\s*PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension;/g,
-                'LD_RUNPATH_SEARCH_PATHS = "@executable_path/../../Frameworks";\nPRODUCT_NAME = MobileMessagingNotificationExtension;'
+                /(\{[^}]*?PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension;[^}]*?LD_RUNPATH_SEARCH_PATHS\s*=\s*"@executable_path\/Frameworks";|\{[^}]*?LD_RUNPATH_SEARCH_PATHS\s*=\s*"@executable_path\/Frameworks";[^}]*?PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension;)/gs,
+                function(match) {
+                    return match.replace('LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";', 'LD_RUNPATH_SEARCH_PATHS = "@executable_path/../../Frameworks";');
+                }
             );
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
