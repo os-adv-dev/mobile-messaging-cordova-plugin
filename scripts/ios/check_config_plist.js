@@ -40,6 +40,9 @@ module.exports = function (context) {
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             if (!projectFileContent.includes('📝 plist_file')) {
+                projectFileContent = projectFileContent.replace('const plist_file = ','var plist_file = ');
+                projectFileContent = projectFileContent.replace('const config_file = ','var config_file = ');
+
                 // Insert the cleanup and console log snippets before the if condition
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${consoleLogSnippet}\n${insertPoint}`);
 
