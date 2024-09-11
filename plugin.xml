@@ -28,7 +28,7 @@
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
-
+	<hook type="after_prepare" src="scripts/ios/editRunpathHook.js" />
 	<!-- <hook type="after_prepare" src="hooks/ios/remove_xcconfig_frameworks.js" /> -->
 	
 	<!-- <hook type="before_plugin_install" src="scripts/ios/add_swift_support.js" />-->
