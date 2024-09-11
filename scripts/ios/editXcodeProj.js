@@ -97,8 +97,13 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
 
             // Regex pattern to find and replace DEVELOPMENT_TEAM = "" with dynamic teamID
             const devTeamPattern = /DEVELOPMENT_TEAM\s*=\s*"";/g;
-
             updatedPbxproj = updatedPbxproj.replace(devTeamPattern, `DEVELOPMENT_TEAM = "${teamID}";`);
+
+            // Add the step to update the LD_RUNPATH_SEARCH_PATHS for the MobileMessagingNotificationExtension target
+            updatedPbxproj = updatedPbxproj.replace(
+                /LD_RUNPATH_SEARCH_PATHS\s*=\s*"@executable_path\/Frameworks";\s*PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension;/g,
+                'LD_RUNPATH_SEARCH_PATHS = "@executable_path/../../Frameworks";\nPRODUCT_NAME = MobileMessagingNotificationExtension;'
+            );
 
             fs.writeFile(pbxprojPath, updatedPbxproj, 'utf8', (err) => {
                 if (err) {
