@@ -292,6 +292,22 @@ fileprivate class MobileMessagingEventsManager {
         commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
+    @objc(checkPermissions:)
+    func checkPermissions(command: CDVInvokedUrlCommand) {
+        let center = UNUserNotificationCenter.current()
+
+        center.getNotificationSettings { settings in
+            let isEnabled = (settings.authorizationStatus == .authorized)
+            if isEnabled {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Notifications are enabled")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            } else {
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Notifications are disabled")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+            }
+        }
+    }
+
     func registerReceiver(_ command: CDVInvokedUrlCommand) {
         eventsManager?.registerReceiver(command)
 
