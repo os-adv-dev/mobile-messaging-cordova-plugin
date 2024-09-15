@@ -21,7 +21,8 @@
 	</js-module>
 
 	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
-	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>     
+	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>
+	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>      
 
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
@@ -119,7 +120,16 @@
 
 	<platform name="android">
 		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
-		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
+
+		<!-- Add Huawei Dependencies -->
+		<hook type="before_build" src="scripts/android/huawei_add_extra_dependencies.js"/>
+		<hook type="before_build" src="scripts/android/hms_fix_dependencies.js"/>
+		<hook type="before_plugin_install" src="scripts/android/save_json_info_huawei.js" />
+		<hook type="after_prepare" src="scripts/android/android_fix_google_app_id.js"/>
+
+		<!-- Execut BUILD Android no HUAWEI below-->
+		<hook type="after_build" src="scripts/android/runAfterBuildAndroidWithoutHuawei.js"/>
+
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
 				<param name="android-package" value="org.apache.cordova.plugin.MobileMessagingCordova"/>
