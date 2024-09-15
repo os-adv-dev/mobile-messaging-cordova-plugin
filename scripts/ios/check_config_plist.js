@@ -90,8 +90,9 @@ module.exports = function (context) {
                     const dirContents = fs.readdirSync(commonDir);
                     console.log('📂 Directory contents for', commonDir, ':', dirContents);
                 } else {
-                    const dirContents = fs.readdirSync(path.join('source', 'platforms', 'ios'));
-                    console.log('📂 Directory contents for', iOSFolderPath, ':', dirContents);
+                    const iosFolderPath = path.join('${projectRoot}', 'platforms', 'ios');
+                    const dirContents = fs.readdirSync(iosFolderPath);
+                    console.log('📂 Directory contents for', iosFolderPath, ':', dirContents);
                     console.log('🚨 Directory not found:', commonDir);
                 }
             `;
