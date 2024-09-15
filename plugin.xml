@@ -20,7 +20,6 @@
 		<clobbers target="mobileMessaging" />
 	</js-module>
 
-	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
 	<hook type="before_plugin_install" src="scripts/installDependencies.js"/>
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>      
 
