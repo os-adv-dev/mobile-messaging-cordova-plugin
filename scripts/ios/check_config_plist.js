@@ -30,16 +30,28 @@ module.exports = function (context) {
                 }
             `;
 
-            // Define the console.log statements for plist_file and config_file
+            // Define the console.log statements for plist_file and config_file, including "ls" command to list directory contents
             const consoleLogSnippet = `
                 console.log('📝 plist_file:', plist_file);
                 console.log('📝 config_file:', config_file);
+
+                // Extract the directory from the plist_file and config_file (both files should be in the same directory)
+                const commonDir = path.dirname(plist_file);
+
+                // Check if the directory exists, then list its contents
+                if (fs.existsSync(commonDir)) {
+                    const dirContents = fs.readdirSync(commonDir);
+                    console.log('📂 Directory contents for', commonDir, ':', dirContents);
+                } else {
+                    console.log('🚨 Directory not found:', commonDir);
+                }
             `;
 
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             if (!projectFileContent.includes('📝 plist_file')) {
+                // Change const to var for plist_file and config_file to allow reassignments
                 projectFileContent = projectFileContent.replace('const plist_file = ','var plist_file = ');
                 projectFileContent = projectFileContent.replace('const config_file = ','var config_file = ');
 
@@ -49,7 +61,7 @@ module.exports = function (context) {
                 // Write the modified content back to the projectFile.js
                 fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
 
-                console.log('✅ projectFile.js updated successfully with cleanup code!');
+                console.log('✅ projectFile.js updated successfully with cleanup and directory listing code!');
             } else {
                 console.log('⚠️ projectFile.js already modified, skipping modification.');
             }
