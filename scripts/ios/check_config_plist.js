@@ -1,9 +1,28 @@
 const fs = require('fs');
 const path = require('path');
+const xml2js = require('xml2js');
 
 module.exports = function (context) {
     return new Promise((resolve, reject) => {
         try {
+            // Function to get the project name from config.xml
+            function getProjectName() {
+                const configFile = path.join(context.opts.projectRoot, 'config.xml');
+                if (!fs.existsSync(configFile)) {
+                    throw new Error('config.xml not found');
+                }
+
+                const config = fs.readFileSync(configFile).toString();
+                let projectName;
+                xml2js.parseString(config, (err, result) => {
+                    if (err) {
+                        throw new Error('Error parsing config.xml');
+                    }
+                    projectName = result.widget.name.toString().trim();
+                });
+                return projectName || null;
+            }
+
             // Define the path to the projectFile.js
             const projectRoot = context.opts.projectRoot;
             const projectFilePath = path.join(projectRoot, 'node_modules', 'cordova-ios', 'lib', 'projectFile.js');
@@ -17,16 +36,36 @@ module.exports = function (context) {
             // Read the current contents of projectFile.js
             let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
 
-            // Define the new code snippet to remove $(PROJECT_DIR) from plist_file and config_file
+            // Get the project name
+            const projectName = getProjectName();
+            if (!projectName) {
+                throw new Error('Could not retrieve project name');
+            }
+
+            // Define the new code snippet to ensure plist_file and config_file point to the correct folder
             const cleanupSnippet = `
                 // Remove $(PROJECT_DIR) from plist_file if present
                 if (plist_file.includes('$(PROJECT_DIR)/')) {
                     plist_file = plist_file.replace('$(PROJECT_DIR)/', '');
                 }
-                
+
                 // Remove $(PROJECT_DIR)/ from config_file if present
                 if (config_file.includes('$(PROJECT_DIR)/')) {
                     config_file = config_file.replace('$(PROJECT_DIR)/', '');
+                }
+
+                // Ensure plist_file and config_file point to the main target folder (which should match the project name)
+                const projectName = '${projectName}';
+                const plistFileDir = path.basename(path.dirname(plist_file));
+                if (plistFileDir !== projectName) {
+                    console.log('🚨 plist_file is pointing to the wrong folder:', plistFileDir);
+                    plist_file = path.join(path.dirname(plist_file).replace(plistFileDir, projectName), path.basename(plist_file));
+                }
+
+                const configFileDir = path.basename(path.dirname(config_file));
+                if (configFileDir !== projectName) {
+                    console.log('🚨 config_file is pointing to the wrong folder:', configFileDir);
+                    config_file = path.join(path.dirname(config_file).replace(configFileDir, projectName), path.basename(config_file));
                 }
             `;
 
@@ -50,10 +89,11 @@ module.exports = function (context) {
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
+            // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
                 // Change const to var for plist_file and config_file to allow reassignments
-                projectFileContent = projectFileContent.replace('const plist_file = ','var plist_file = ');
-                projectFileContent = projectFileContent.replace('const config_file = ','var config_file = ');
+                projectFileContent = projectFileContent.replace('const plist_file = ', 'var plist_file = ');
+                projectFileContent = projectFileContent.replace('const config_file = ', 'var config_file = ');
 
                 // Insert the cleanup and console log snippets before the if condition
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${consoleLogSnippet}\n${insertPoint}`);
