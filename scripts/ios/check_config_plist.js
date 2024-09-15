@@ -57,10 +57,13 @@ module.exports = function (context) {
                 // Ensure plist_file and config_file point to the main target folder (which should match the project name)
                 const projectName = '${projectName}';
                 const plistFileDir = path.basename(path.dirname(plist_file));
+                const expectedPlistFile = path.join('source', 'platforms', 'ios', projectName, \`\${projectName}-Info.plist\`);
+
                 if (plistFileDir !== projectName) {
                     console.log('🚨 plist_file is pointing to the wrong folder:', plistFileDir);
-                    plist_file = path.join(path.dirname(plist_file).replace(plistFileDir, projectName), path.basename(plist_file));
-                } else {
+                    plist_file = expectedPlistFile;
+                    console.log('✅ plist_file corrected to:', plist_file);
+                } else { 
                     console.log('😍 plist_file is pointing to the correct folder:', plistFileDir);
                 }
 
@@ -68,6 +71,7 @@ module.exports = function (context) {
                 if (configFileDir !== projectName) {
                     console.log('🚨 config_file is pointing to the wrong folder:', configFileDir);
                     config_file = path.join(path.dirname(config_file).replace(configFileDir, projectName), path.basename(config_file));
+                    console.log('✅ config_file corrected to:', config_file);
                 } else {
                     console.log('😍 config_file is pointing to the correct folder:', configFileDir);
                 }
