@@ -51,7 +51,6 @@ module.exports = function (context) {
                 console.log("👉 plist_file_entry: " + plist_file_entry);
                 console.log("👉 plist_file: " + plist_file);
                 console.log("👉 config_file: " + config_file);
-                console.log("👉 : " + );
             `;
 
             // Define the new code snippet to ensure plist_file and config_file point to the correct folder
