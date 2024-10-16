@@ -42,6 +42,16 @@ module.exports = function (context) {
                 throw new Error('Could not retrieve project name');
             }
 
+            // Regular expressions to match and remove the original variable declarations
+            const regexPlistFileEntry = /^\s*const\s+plist_file_entry\s*=.*$/m;
+            const regexPlistFile = /^\s*var\s+plist_file\s*=.*$/m;
+            const regexConfigFile = /^\s*var\s+config_file\s*=.*$/m;
+
+            // Remove the lines using the regular expressions
+            projectFileContent = projectFileContent.replace(regexPlistFileEntry, '');
+            projectFileContent = projectFileContent.replace(regexPlistFile, '');
+            projectFileContent = projectFileContent.replace(regexConfigFile, '');
+
             // Define the new code snippet to ensure plist_file and config_file point to the correct folder
             const cleanupSnippet = `
                 // Ensure plist_file and config_file point to the main target folder (which should match the project name)
@@ -72,17 +82,12 @@ module.exports = function (context) {
                 }
             `;
 
-            // Use Regular Expressions to remove the original variable declarations
-            projectFileContent = projectFileContent.replace(/^\s*const\s+plist_file_entry\s*=.*$/m, "");
-            projectFileContent = projectFileContent.replace(/^\s*var\s+plist_file\s*=.*$/m, "");
-            projectFileContent = projectFileContent.replace(/^\s*var\s+config_file\s*=.*$/m, "");
-
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
-                // Insert the cleanup snippet before the if condition                
+                // Insert the cleanup snippet before the if condition
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
 
                 // Write the modified content back to the projectFile.js
