@@ -58,7 +58,6 @@ module.exports = function (context) {
                 var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, '$1').replace(/\\&/g, '&'));
                 var config_file = path.join(path.dirname(plist_file), 'config.xml');
 
-
                 const plistFileDir = path.basename(path.dirname(plist_file));
                 if (plistFileDir !== projectName) {
                     console.log('🚨 plist_file is pointing to the wrong folder:', plistFileDir);
@@ -73,26 +72,23 @@ module.exports = function (context) {
                 }
             `;
 
+            // Use Regular Expressions to remove the original variable declarations
+            projectFileContent = projectFileContent.replace(/^\s*const\s+plist_file_entry\s*=.*$/m, "");
+            projectFileContent = projectFileContent.replace(/^\s*var\s+plist_file\s*=.*$/m, "");
+            projectFileContent = projectFileContent.replace(/^\s*var\s+config_file\s*=.*$/m, "");
+
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
-            // Use Regular Expressions to remove the problematic lines
-            projectFileContent = projectFileContent.replace(/^\s*var\s+plist_file\s*=\s*path\.join\(project_dir,.*$/m, "");
-            projectFileContent = projectFileContent.replace(/^\s*var\s+config_file\s*=\s*path\.join\(path\.dirname\(plist_file\),.*$/m, "");
-
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
-                // Change const to var for plist_file and config_file to allow reassignments
-                projectFileContent = projectFileContent.replace('const plist_file = ', 'var plist_file = ');
-                projectFileContent = projectFileContent.replace('const config_file = ', 'var config_file = ');
-
-                // Insert the cleanup and console log snippets before the if condition                
+                // Insert the cleanup snippet before the if condition                
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
 
                 // Write the modified content back to the projectFile.js
                 fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
 
-                console.log('✅ projectFile.js updated successfully with cleanup and directory listing code!');
+                console.log('✅ projectFile.js updated successfully with cleanup code!');
             } else {
                 console.log('⚠️ projectFile.js already modified, skipping modification.');
             }
