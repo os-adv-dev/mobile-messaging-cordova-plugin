@@ -36,11 +36,16 @@ module.exports = function (context) {
             // Read the current contents of projectFile.js line by line
             let projectFileContent = fs.readFileSync(projectFilePath, 'utf8').split('\n');
 
-            // Filter out the lines starting with the specified variable declarations
+            // Define the patterns for the lines we want to remove
+            const linesToRemove = [
+                'const plist_file_entry',
+                'var plist_file',
+                'var config_file'
+            ];
+
+            // Filter out the lines starting with the defined patterns
             const filteredLines = projectFileContent.filter(line => {
-                return !line.trim().startsWith('const plist_file_entry') &&
-                       !line.trim().startsWith('var plist_file') &&
-                       !line.trim().startsWith('var config_file');
+                return !linesToRemove.some(pattern => line.trim().startsWith(pattern));
             });
 
             // Get the project name
