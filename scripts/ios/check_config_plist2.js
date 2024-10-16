@@ -36,11 +36,11 @@ module.exports = function (context) {
             // Read the current contents of projectFile.js
             let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
 
-            // Remove only the declaration lines of the variables using string.replace()
+            // Remove problematic lines using string.replace()
             projectFileContent = projectFileContent
-                .replace(/^\s*var\s+plist_file_entry\s*=.*;\s*\n/g, '')  // Removes line where plist_file_entry is declared
-                .replace(/^\s*var\s+plist_file\s*=.*;\s*\n/g, '')        // Removes line where plist_file is declared
-                .replace(/^\s*var\s+config_file\s*=.*;\s*\n/g, '');      // Removes line where config_file is declared
+                .replace(/^\s*(?:var|let|const)\s+plist_file_entry\s*=.*;\s*\n/gm, '')  // Removes line where plist_file_entry is declared
+                .replace(/^\s*(?:var|let|const)\s+plist_file\s*=.*;\s*\n/gm, '')        // Removes line where plist_file is declared
+                .replace(/^\s*(?:var|let|const)\s+config_file\s*=.*;\s*\n/gm, '');      // Removes line where config_file is declared
 
             // Get the project name
             const projectName = getProjectName();
