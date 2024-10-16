@@ -46,7 +46,6 @@ module.exports = function (context) {
                 console.log("👉 locations: " + JSON.stringify(locations));
                 console.log("👉 project_dir: " + project_dir);
                 console.log("👉 pbxPath: " + pbxPath);
-                console.log("👉 xcodeproj: " + xcodeproj);
                 console.log("👉 xcBuildConfiguration: " + xcBuildConfiguration);
                 console.log("👉 plist_file_entry: " + plist_file_entry);
                 console.log("👉 plist_file: " + plist_file);
