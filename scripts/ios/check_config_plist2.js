@@ -106,16 +106,21 @@ module.exports = function (context) {
 
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
-            const codeToBeRemoved = '    const plist_file_entry = Object.values(xcBuildConfiguration).find(entry => entry.buildSettings && entry.buildSettings.INFOPLIST_FILE);\n    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, \'$1\').replace(/\\&/g, \'&\'));\n    var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
+            const codeToBeRemoved1 = '    const plist_file_entry = Object.values(xcBuildConfiguration).find(entry => entry.buildSettings && entry.buildSettings.INFOPLIST_FILE);'
+            const codeToBeRemoved2 = '    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, \'$1\').replace(/\\&/g, \'&\'));'
+            const codeToBeRemoved3 = '    var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
 
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
+                projectFileContent = projectFileContent.replace(codeToBeRemoved1, "");
+                projectFileContent = projectFileContent.replace(codeToBeRemoved2, "");
+                projectFileContent = projectFileContent.replace(codeToBeRemoved3, "");
+
                 // Change const to var for plist_file and config_file to allow reassignments
                 projectFileContent = projectFileContent.replace('const plist_file = ', 'var plist_file = ');
                 projectFileContent = projectFileContent.replace('const config_file = ', 'var config_file = ');
 
-                // Insert the cleanup and console log snippets before the if condition
-                projectFileContent = projectFileContent.replace(codeToBeRemoved, "");
+                // Insert the cleanup and console log snippets before the if condition                
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${consoleLogSnippet}\n${insertPoint}`);
                 
 
