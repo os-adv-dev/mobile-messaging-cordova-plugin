@@ -106,9 +106,12 @@ module.exports = function (context) {
 
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
-            const codeToBeRemoved1 = '    const plist_file_entry = Object.values(xcBuildConfiguration).find(entry => entry.buildSettings && entry.buildSettings.INFOPLIST_FILE);'
-            const codeToBeRemoved2 = '    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, \'$1\').replace(/\\&/g, \'&\'));'
+            const codeToBeRemoved1 = '    const plist_file_entry = Object.values(xcBuildConfiguration).find(entry => entry.buildSettings && entry.buildSettings.INFOPLIST_FILE);';
+            const codeToBeRemoved2 = '    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, \'$1\').replace(/\\&/g, \'&\'));';
             const codeToBeRemoved3 = '    var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
+            const codeToBeRemoved4 = '    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, \'$1\').replace(/\\&/g, \'&\'));';
+            const codeToBeRemoved5 = '    var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
+
 
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
