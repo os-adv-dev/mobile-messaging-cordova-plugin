@@ -118,6 +118,8 @@ module.exports = function (context) {
                 projectFileContent = projectFileContent.replace(codeToBeRemoved1, "");
                 projectFileContent = projectFileContent.replace(codeToBeRemoved2, "");
                 projectFileContent = projectFileContent.replace(codeToBeRemoved3, "");
+                projectFileContent = projectFileContent.replace(codeToBeRemoved4, "");
+                projectFileContent = projectFileContent.replace(codeToBeRemoved5, "");
 
                 // Change const to var for plist_file and config_file to allow reassignments
                 projectFileContent = projectFileContent.replace('const plist_file = ', 'var plist_file = ');
