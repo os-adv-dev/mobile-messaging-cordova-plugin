@@ -18,7 +18,7 @@ module.exports = function (context) {
                     if (err) {
                         throw new Error('Error parsing config.xml');
                     }
-                    projectName = result.widget.name.toString().trim();
+                    projectName = result.widget.name[0].trim();
                 });
                 return projectName || null;
             }
@@ -82,7 +82,7 @@ module.exports = function (context) {
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             // Ensure that the code is not already injected
-            if (!projectFileContent.includes('📝 plist_file')) {
+            if (!projectFileContent.includes('const projectName')) {
                 // Insert the cleanup snippet before the if condition
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
             } else {
