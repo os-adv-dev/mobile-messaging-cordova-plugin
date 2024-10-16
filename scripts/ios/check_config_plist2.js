@@ -36,17 +36,11 @@ module.exports = function (context) {
             // Read the current contents of projectFile.js
             let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
 
-            // Define regex patterns to remove problematic lines
-            const regexToRemove = [
-                /^.*const\s+plist_file_entry\s*=.*$/gm,  // Line defining plist_file_entry
-                /^.*var\s+plist_file\s*=.*$/gm,          // Line defining plist_file
-                /^.*var\s+config_file\s*=.*$/gm          // Line defining config_file
-            ];
-
-            // Apply the regex patterns to remove matching lines
-            regexToRemove.forEach((regex) => {
-                projectFileContent = projectFileContent.replace(regex, '');
-            });
+            // Remove problematic lines using string.replace()
+            projectFileContent = projectFileContent
+                .replace(/.*plist_file_entry.*\n/g, '')  // Removes any line that includes plist_file_entry
+                .replace(/.*plist_file.*\n/g, '')       // Removes any line that includes plist_file
+                .replace(/.*config_file.*\n/g, '');     // Removes any line that includes config_file
 
             // Get the project name
             const projectName = getProjectName();
