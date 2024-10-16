@@ -33,19 +33,19 @@ module.exports = function (context) {
                 return reject(new Error(`projectFile.js not found at ${projectFilePath}`));
             }
 
-            // Read the current contents of projectFile.js line by line
-            let projectFileContent = fs.readFileSync(projectFilePath, 'utf8').split('\n');
+            // Read the current contents of projectFile.js
+            let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
 
-            // Define the patterns for the lines we want to remove
-            const linesToRemove = [
-                'const plist_file_entry',
-                'var plist_file',
-                'var config_file'
+            // Define regex patterns to remove problematic lines
+            const regexToRemove = [
+                /^.*const\s+plist_file_entry\s*=.*$/gm,  // Line defining plist_file_entry
+                /^.*var\s+plist_file\s*=.*$/gm,          // Line defining plist_file
+                /^.*var\s+config_file\s*=.*$/gm          // Line defining config_file
             ];
 
-            // Filter out the lines starting with the defined patterns
-            const filteredLines = projectFileContent.filter(line => {
-                return !linesToRemove.some(pattern => line.trim().startsWith(pattern));
+            // Apply the regex patterns to remove matching lines
+            regexToRemove.forEach((regex) => {
+                projectFileContent = projectFileContent.replace(regex, '');
             });
 
             // Get the project name
@@ -88,20 +88,24 @@ module.exports = function (context) {
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             // Ensure that the code is not already injected
-            if (!filteredLines.some(line => line.includes('📝 plist_file'))) {
-                // Join the filtered content back into a string
-                let modifiedContent = filteredLines.join('\n');
-
+            if (!projectFileContent.includes('📝 plist_file')) {
                 // Insert the cleanup snippet before the if condition
-                modifiedContent = modifiedContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
-
-                // Write the modified content back to the projectFile.js
-                fs.writeFileSync(projectFilePath, modifiedContent, 'utf8');
-
-                console.log('✅ projectFile.js updated successfully with cleanup code!');
+                projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
             } else {
                 console.log('⚠️ projectFile.js already modified, skipping modification.');
             }
+
+            // Log the content to be saved before saving it
+            console.log('🔍 Modified content to be saved:\n', projectFileContent);
+
+            // Write the modified content back to the projectFile.js
+            fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
+
+            console.log('✅ projectFile.js updated successfully with cleanup code!');
+
+            // Read the projectFile.js again to verify if the changes are there
+            const savedContent = fs.readFileSync(projectFilePath, 'utf8');
+            console.log('🔍 Rechecking content after saving:\n', savedContent);
 
             resolve();
         } catch (error) {
