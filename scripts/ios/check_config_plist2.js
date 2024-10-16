@@ -33,24 +33,21 @@ module.exports = function (context) {
                 return reject(new Error(`projectFile.js not found at ${projectFilePath}`));
             }
 
-            // Read the current contents of projectFile.js
-            let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
+            // Read the current contents of projectFile.js line by line
+            let projectFileContent = fs.readFileSync(projectFilePath, 'utf8').split('\n');
+
+            // Filter out the lines starting with the specified variable declarations
+            const filteredLines = projectFileContent.filter(line => {
+                return !line.trim().startsWith('const plist_file_entry') &&
+                       !line.trim().startsWith('var plist_file') &&
+                       !line.trim().startsWith('var config_file');
+            });
 
             // Get the project name
             const projectName = getProjectName();
             if (!projectName) {
                 throw new Error('Could not retrieve project name');
             }
-
-            // Regular expressions to match and remove the original variable declarations
-            const regexPlistFileEntry = /^\s*const\s+plist_file_entry\s*=.*$/m;
-            const regexPlistFile = /^\s*var\s+plist_file\s*=.*$/m;
-            const regexConfigFile = /^\s*var\s+config_file\s*=.*$/m;
-
-            // Remove the lines using the regular expressions
-            projectFileContent = projectFileContent.replace(regexPlistFileEntry, '');
-            projectFileContent = projectFileContent.replace(regexPlistFile, '');
-            projectFileContent = projectFileContent.replace(regexConfigFile, '');
 
             // Define the new code snippet to ensure plist_file and config_file point to the correct folder
             const cleanupSnippet = `
@@ -86,12 +83,15 @@ module.exports = function (context) {
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
 
             // Ensure that the code is not already injected
-            if (!projectFileContent.includes('📝 plist_file')) {
+            if (!filteredLines.some(line => line.includes('📝 plist_file'))) {
+                // Join the filtered content back into a string
+                let modifiedContent = filteredLines.join('\n');
+
                 // Insert the cleanup snippet before the if condition
-                projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
+                modifiedContent = modifiedContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
 
                 // Write the modified content back to the projectFile.js
-                fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
+                fs.writeFileSync(projectFilePath, modifiedContent, 'utf8');
 
                 console.log('✅ projectFile.js updated successfully with cleanup code!');
             } else {
