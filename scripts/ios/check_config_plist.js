@@ -44,16 +44,6 @@ module.exports = function (context) {
 
             // Define the new code snippet to ensure plist_file and config_file point to the correct folder
             const cleanupSnippet = `
-                // Remove $(PROJECT_DIR) from plist_file if present
-                if (plist_file.includes('$(PROJECT_DIR)/')) {
-                    plist_file = plist_file.replace('$(PROJECT_DIR)/', '');
-                }
-
-                // Remove $(PROJECT_DIR)/ from config_file if present
-                if (config_file.includes('$(PROJECT_DIR)/')) {
-                    config_file = config_file.replace('$(PROJECT_DIR)/', '');
-                }
-
                 // Ensure plist_file and config_file point to the main target folder (which should match the project name)
                 const projectName = '${projectName}';
                 const plistFileDir = path.basename(path.dirname(plist_file));
@@ -88,11 +78,11 @@ module.exports = function (context) {
                 // Check if the directory exists, then list its contents
                 if (fs.existsSync(commonDir)) {
                     const dirContents = fs.readdirSync(commonDir);
-                    console.log('📂 Directory contents for', commonDir, ':', dirContents);
+                    console.log('📂 Directory contents for commonDir', commonDir, ':', dirContents);
                 } else {
                     const iosFolderPath = path.join('${projectRoot}', 'platforms', 'ios');
                     const dirContents = fs.readdirSync(iosFolderPath);
-                    console.log('📂 Directory contents for', iosFolderPath, ':', dirContents);
+                    console.log('📂 Directory contents for iosFolderPath', iosFolderPath, ':', dirContents);
                     console.log('🚨 Directory not found:', commonDir);
                 }
             `;
