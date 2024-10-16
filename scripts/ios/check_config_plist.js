@@ -42,6 +42,18 @@ module.exports = function (context) {
                 throw new Error('Could not retrieve project name');
             }
 
+            const xcBuildConfiguration = `
+                console.log("👉 locations: " + JSON.stringify(locations));
+                console.log("👉 project_dir: " + project_dir);
+                console.log("👉 pbxPath: " + );
+                console.log("👉 xcodeproj: " + xcodeproj);
+                console.log("👉 xcBuildConfiguration: " + xcBuildConfiguration);
+                console.log("👉 plist_file_entry: " + plist_file_entry);
+                console.log("👉 plist_file: " + plist_file);
+                console.log("👉 config_file: " + config_file);
+                console.log("👉 : " + );
+            `;
+
             // Define the new code snippet to ensure plist_file and config_file point to the correct folder
             const cleanupSnippet = `
                 // Ensure plist_file and config_file point to the main target folder (which should match the project name)
@@ -89,6 +101,7 @@ module.exports = function (context) {
 
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
+            const insertPoint2 = 'var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
 
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
@@ -98,6 +111,7 @@ module.exports = function (context) {
 
                 // Insert the cleanup and console log snippets before the if condition
                 projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${consoleLogSnippet}\n${insertPoint}`);
+                projectFileContent = projectFileContent.replace(insertPoint2, `${insertPoint2}\n${xcBuildConfiguration}`);
 
                 // Write the modified content back to the projectFile.js
                 fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
