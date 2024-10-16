@@ -47,7 +47,7 @@ module.exports = function (context) {
                 console.log("👉 project_dir: " + project_dir);
                 console.log("👉 pbxPath: " + pbxPath);
                 console.log("👉 xcBuildConfiguration: " + JSON.stringify(xcBuildConfiguration));
-                console.log("👉 plist_file_entry: " + plist_file_entry);
+                console.log("👉 plist_file_entry: " + JSON.stringify(plist_file_entry));
                 console.log("👉 plist_file: " + plist_file);
                 console.log("👉 config_file: " + config_file);
             `;
