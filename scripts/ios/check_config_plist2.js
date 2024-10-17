@@ -48,57 +48,30 @@ module.exports = function (context) {
                 throw new Error('Could not retrieve project name');
             }
 
-            // Define the new code snippet to handle plist_file and config_file with fallback logic
+            // Define the new code snippet to handle plist_file and config_file with hardcoded paths
             const cleanupSnippet = `
-                // Ensure plist_file and config_file point to the correct folder
+                // Ensure plist_file and config_file point to the correct hardcoded folder
                 const projectName = '${projectName}';
-                const plist_file_entry = Object.values(xcBuildConfiguration).find(entry => {
-                    if (entry.buildSettings && entry.buildSettings.INFOPLIST_FILE && entry.buildSettings.PRODUCT_NAME) {
-                        console.log('Checking entry:', entry.buildSettings.PRODUCT_NAME);
-                        return entry.buildSettings.PRODUCT_NAME.includes(projectName);
-                    }
-                    return false;
-                });
+                const plist_file = path.join(project_dir, 'platforms/ios/' + projectName + '/' + projectName + '-Info.plist');
+                const config_file = path.join(project_dir, 'platforms/ios/' + projectName + '/config.xml');
 
-                // If no entry is found, log details for debugging
-                if (!plist_file_entry) {
-                    console.error('CordovaError: Could not find *-Info.plist file for main target.');
-                    console.error('Available xcBuildConfiguration entries:', Object.values(xcBuildConfiguration).map(entry => entry.buildSettings));
+                // Log the paths for validation
+                console.log('Hardcoded plist_file path:', plist_file);
+                console.log('Hardcoded config_file path:', config_file);
 
-                    // Fallback logic: Attempt to locate an entry based on alternate conditions
-                    const fallback_entry = Object.values(xcBuildConfiguration).find(entry => {
-                        if (entry.buildSettings && entry.buildSettings.INFOPLIST_FILE) {
-                            console.warn('Falling back to INFOPLIST_FILE:', entry.buildSettings.INFOPLIST_FILE);
-                            return true;  // Fallback to any entry with INFOPLIST_FILE if PRODUCT_NAME is missing
-                        }
-                        return false;
-                    });
-
-                    if (fallback_entry) {
-                        console.warn('Using fallback entry:', fallback_entry.buildSettings.INFOPLIST_FILE);
-                        var plist_file = path.join(project_dir, fallback_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, '$1').replace(/\\&/g, '&'));
-                    } else {
-                        throw new CordovaError('Could not find any valid *-Info.plist file in the build settings.');
-                    }
+                // Check if the plist_file and config_file exist
+                if (!fs.existsSync(plist_file)) {
+                    console.error(\`🚨 plist_file not found at \${plist_file}\`);
+                    throw new CordovaError(\`plist_file not found at \${plist_file}\`);
                 } else {
-                    var plist_file = path.join(project_dir, plist_file_entry.buildSettings.INFOPLIST_FILE.replace(/^"(.*)"$/g, '$1').replace(/\\&/g, '&'));
-                    console.log('Found plist_file:', plist_file);
+                    console.log('😍 plist_file is pointing to the correct path:', plist_file);
                 }
 
-                var config_file = path.join(path.dirname(plist_file), 'config.xml');
-
-                const plistFileDir = path.basename(path.dirname(plist_file));
-                if (plistFileDir !== projectName) {
-                    console.log('🚨 plist_file is pointing to the wrong folder:', plistFileDir);
-                } else { 
-                    console.log('😍 plist_file is pointing to the correct folder:', plistFileDir);
-                }
-
-                const configFileDir = path.basename(path.dirname(config_file));
-                if (configFileDir !== projectName) {
-                    console.log('🚨 config_file is pointing to the wrong folder:', configFileDir);
+                if (!fs.existsSync(config_file)) {
+                    console.error(\`🚨 config_file not found at \${config_file}\`);
+                    throw new CordovaError(\`config_file not found at \${config_file}\`);
                 } else {
-                    console.log('😍 config_file is pointing to the correct folder:', configFileDir);
+                    console.log('😍 config_file is pointing to the correct path:', config_file);
                 }
             `;
 
