@@ -87,7 +87,7 @@ module.exports = function (context) {
             }
 
             // Log the content to be saved before saving it
-            console.log('🔍 Modified content to be saved:\n', projectFileContent);
+            //console.log('🔍 Modified content to be saved:\n', projectFileContent);
 
             // Write the modified content back to the projectFile.js
             fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
@@ -95,8 +95,8 @@ module.exports = function (context) {
             console.log('✅ projectFile.js updated successfully with cleanup code!');
 
             // Read the projectFile.js again to verify if the changes are there
-            const savedContent = fs.readFileSync(projectFilePath, 'utf8');
-            console.log('🔍 Rechecking content after saving:\n', savedContent);
+            //const savedContent = fs.readFileSync(projectFilePath, 'utf8');
+            //console.log('🔍 Rechecking content after saving:\n', savedContent);
 
             resolve();
         } catch (error) {
