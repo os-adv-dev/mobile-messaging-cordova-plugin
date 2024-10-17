@@ -52,8 +52,8 @@ module.exports = function (context) {
             const cleanupSnippet = `
                 // Ensure plist_file and config_file point to the correct hardcoded folder
                 const projectName = '${projectName}';
-                const plist_file = path.join(project_dir, 'platforms/ios/' + projectName + '/' + projectName + '-Info.plist');
-                const config_file = path.join(project_dir, 'platforms/ios/' + projectName + '/config.xml');
+                const plist_file = path.join(project_dir, projectName + '/' + projectName + '-Info.plist');
+                const config_file = path.join(project_dir, projectName + '/config.xml');
 
                 // Log the paths for validation
                 console.log('Hardcoded plist_file path:', plist_file);
