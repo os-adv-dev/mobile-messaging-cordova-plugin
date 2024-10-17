@@ -36,88 +36,67 @@ module.exports = function (context) {
             // Read the current contents of projectFile.js
             let projectFileContent = fs.readFileSync(projectFilePath, 'utf8');
 
+            // Remove problematic lines using string.replace()
+            projectFileContent = projectFileContent
+                .replace(/^\s*(?:var|let|const)\s+plist_file_entry\s*=.*;\s*\n/gm, '')  // Removes line where plist_file_entry is declared
+                .replace(/^\s*(?:var|let|const)\s+plist_file\s*=.*;\s*\n/gm, '')        // Removes line where plist_file is declared
+                .replace(/^\s*(?:var|let|const)\s+config_file\s*=.*;\s*\n/gm, '');      // Removes line where config_file is declared
+
             // Get the project name
             const projectName = getProjectName();
             if (!projectName) {
                 throw new Error('Could not retrieve project name');
             }
 
-            const xcBuildConfiguration = `
-                console.log("👉 locations: " + JSON.stringify(locations));
-                console.log("👉 project_dir: " + project_dir);
-                console.log("👉 pbxPath: " + pbxPath);
-                console.log("👉 xcBuildConfiguration: " + JSON.stringify(xcBuildConfiguration));
-                console.log("👉 plist_file_entry: " + JSON.stringify(plist_file_entry));
-                console.log("👉 plist_file: " + plist_file);
-                console.log("👉 config_file: " + config_file);
-            `;
-
-            // Define the new code snippet to ensure plist_file and config_file point to the correct folder
+            // Define the new code snippet to handle plist_file and config_file with hardcoded paths
             const cleanupSnippet = `
-                // Ensure plist_file and config_file point to the main target folder (which should match the project name)
+                // Ensure plist_file and config_file point to the correct hardcoded folder
                 const projectName = '${projectName}';
-                const plistFileDir = path.basename(path.dirname(plist_file));
-                const expectedPlistFile = path.join('source', 'platforms', 'ios', projectName, \`\${projectName}-Info.plist\`);
+                const plist_file = path.join(project_dir, projectName + '/' + projectName + '-Info.plist');
+                const config_file = path.join(project_dir, projectName + '/config.xml');
 
-                if (plistFileDir !== projectName) {
-                    console.log('🚨 plist_file is pointing to the wrong folder:', plistFileDir);
-                    plist_file = expectedPlistFile;
-                    console.log('✅ plist_file corrected to:', plist_file);
-                } else { 
-                    console.log('😍 plist_file is pointing to the correct folder:', plistFileDir);
+                // Log the paths for validation
+                console.log('Hardcoded plist_file path:', plist_file);
+                console.log('Hardcoded config_file path:', config_file);
+
+                // Check if the plist_file and config_file exist
+                if (!fs.existsSync(plist_file)) {
+                    console.error(\`🚨 plist_file not found at \${plist_file}\`);
+                    throw new CordovaError(\`plist_file not found at \${plist_file}\`);
+                } else {
+                    console.log('😍 plist_file is pointing to the correct path:', plist_file);
                 }
 
-                const configFileDir = path.basename(path.dirname(config_file));
-                if (configFileDir !== projectName) {
-                    console.log('🚨 config_file is pointing to the wrong folder:', configFileDir);
-                    config_file = path.join(path.dirname(config_file).replace(configFileDir, projectName), path.basename(config_file));
-                    console.log('✅ config_file corrected to:', config_file);
+                if (!fs.existsSync(config_file)) {
+                    console.error(\`🚨 config_file not found at \${config_file}\`);
+                    throw new CordovaError(\`config_file not found at \${config_file}\`);
                 } else {
-                    console.log('😍 config_file is pointing to the correct folder:', configFileDir);
-                }
-            `;
-
-            // Define the console.log statements for plist_file and config_file, including "ls" command to list directory contents
-            const consoleLogSnippet = `
-                console.log('📝 plist_file:', plist_file);
-                console.log('📝 config_file:', config_file);
-
-                // Extract the directory from the plist_file and config_file (both files should be in the same directory)
-                const commonDir = path.dirname(plist_file);
-
-                // Check if the directory exists, then list its contents
-                if (fs.existsSync(commonDir)) {
-                    const dirContents = fs.readdirSync(commonDir);
-                    console.log('📂 Directory contents for commonDir', commonDir, ':', dirContents);
-                } else {
-                    const iosFolderPath = path.join('${projectRoot}', 'platforms', 'ios');
-                    const dirContents = fs.readdirSync(iosFolderPath);
-                    console.log('📂 Directory contents for iosFolderPath', iosFolderPath, ':', dirContents);
-                    console.log('🚨 Directory not found:', commonDir);
+                    console.log('😍 config_file is pointing to the correct path:', config_file);
                 }
             `;
 
             // Find the location before the `if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {`
             const insertPoint = 'if (!fs.existsSync(plist_file) || !fs.existsSync(config_file)) {';
-            const insertPoint2 = 'var config_file = path.join(path.dirname(plist_file), \'config.xml\');';
 
             // Ensure that the code is not already injected
             if (!projectFileContent.includes('📝 plist_file')) {
-                // Change const to var for plist_file and config_file to allow reassignments
-                projectFileContent = projectFileContent.replace('const plist_file = ', 'var plist_file = ');
-                projectFileContent = projectFileContent.replace('const config_file = ', 'var config_file = ');
-
-                // Insert the cleanup and console log snippets before the if condition
-                projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${consoleLogSnippet}\n${insertPoint}`);
-                projectFileContent = projectFileContent.replace(insertPoint2, `${insertPoint2}\n${xcBuildConfiguration}`);
-
-                // Write the modified content back to the projectFile.js
-                fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
-
-                console.log('✅ projectFile.js updated successfully with cleanup and directory listing code!');
+                // Insert the cleanup snippet before the if condition
+                projectFileContent = projectFileContent.replace(insertPoint, `${cleanupSnippet}\n${insertPoint}`);
             } else {
                 console.log('⚠️ projectFile.js already modified, skipping modification.');
             }
+
+            // Log the content to be saved before saving it
+            console.log('🔍 Modified content to be saved:\n', projectFileContent);
+
+            // Write the modified content back to the projectFile.js
+            fs.writeFileSync(projectFilePath, projectFileContent, 'utf8');
+
+            console.log('✅ projectFile.js updated successfully with cleanup code!');
+
+            // Read the projectFile.js again to verify if the changes are there
+            const savedContent = fs.readFileSync(projectFilePath, 'utf8');
+            console.log('🔍 Rechecking content after saving:\n', savedContent);
 
             resolve();
         } catch (error) {
