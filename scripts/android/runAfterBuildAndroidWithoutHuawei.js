@@ -17,38 +17,63 @@ module.exports = function(context) {
     const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
     const { credentials, webServiceUrl, huaweiSenderId, isBuildHuawei } = huaweiInfo;
 
-    // Check if isBuildHuawei is true
-    if (isBuildHuawei !== true) {
-        console.log('ℹ️ -- isBuildHuawei is not true. Skipping plugin management.');
-        return;
-    }
+       // Check if isBuildHuawei is false
+       if (!isBuildHuawei) {
+        console.log('ℹ️ -- isBuildHuawei is false. Skipping upload process, but proceeding with plugin management.');
 
-    // Primeira etapa: Upload do APK
-    return runUploadBinaryScript(context)
-        .then(() => {
-            console.log('✅ -- APK uploaded successfully.');
-            // Segunda etapa: Remover o plugin após o upload ser concluído
-            return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
-        })
-        .then(() => {
-            console.log("✅ -- Plugin HUAWEI removed successfully.");
-            // Terceira etapa: Adicionar o plugin novamente
-            const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
-            console.log("🔄 -- Adding plugin from specific branch...");
-            return execShellCommand(addPluginCommand);
-        })
-        .then(() => {
-            console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
-            return runHmsBuildHook(context);
-        })
-        .then(() => runHuaweiDependencyHook(context))
-        .then(() => runAfterBuildHook(context))
-        .then(() => {
-            console.log('✅ -- All Hooks executed successfully APP EXECUTE FINISH --- .');
-        })
-        .catch(error => {
-            console.error(`❌ -- Error during plugin management: ${error}`);
-        });
+        // Run only the Hms build hook and plugin management when isBuildHuawei is false
+        return runHmsBuildHook(context)
+            .then(() => {
+                console.log('✅ -- Hms Build Hook executed successfully for build without Huawei.');
+
+                // Remove the existing plugin
+                return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
+            })
+            .then(() => {
+                console.log("✅ -- Plugin HUAWEI removed successfully.");
+
+                // Add the alternative plugin
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                console.log("🔄 -- Adding plugin from specific branch...");
+                return execShellCommand(addPluginCommand);
+            })
+            .then(() => {
+                console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
+            })
+            .catch(error => {
+                console.error(`❌ -- Error during plugin management: ${error}`);
+            });
+    } else {
+        // Continue with the full process if isBuildHuawei is true
+        console.log('ℹ️ -- isBuildHuawei is true. Proceeding with full plugin management process.');
+
+        // Upload do APK
+        return runUploadBinaryScript(context)
+            .then(() => {
+                console.log('✅ -- APK uploaded successfully.');
+                // Remover o plugin após o upload ser concluído
+                return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
+            })
+            .then(() => {
+                console.log("✅ -- Plugin HUAWEI removed successfully.");
+                // Add again the plugin using another branch
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                console.log("🔄 -- Adding plugin from specific branch...");
+                return execShellCommand(addPluginCommand);
+            })
+            .then(() => {
+                console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
+                return runHmsBuildHook(context);
+            })
+            .then(() => runHuaweiDependencyHook(context))
+            .then(() => runAfterBuildHook(context))
+            .then(() => {
+                console.log('✅ -- All Hooks executed successfully APP EXECUTE FINISH --- .');
+            })
+            .catch(error => {
+                console.error(`❌ -- Error during plugin management: ${error}`);
+            });
+    }
 };
 
 function runAfterBuildHook(context) {
@@ -240,8 +265,8 @@ function runUploadBinaryScript(context) {
                 "Content-Type": "application/octet-stream",
                 "Authorization": encryptedAuth,
             },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
+            maxContentLength: 524288000, // 500 MB
+            maxBodyLength: 524288000, // 500 MB
             timeout: 300000
         });
     })
