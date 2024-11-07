@@ -19,10 +19,20 @@ module.exports = function(ctx) {
     }
 
     var args = process.argv.slice(2);
-    var hmsBuild = true; // In this case it is always TRUE because I am forcing build Huawei.
+    // Get variables from huawei_info.json file
+    const projectRoot = ctx.opts.projectRoot;
+    const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    console.log("✅ -- Reading Huawei info from file: " + jsonFilePath);
+
+    const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    const { isBuildHuawei } = huaweiInfo;
+    var hmsBuild = isBuildHuawei;
+
     if (hmsBuild) {
-        console.log("HMS enabled. Start checking app_id");
+        console.log("--- 📦 -- HMS ENABLED. Start checking app_id");
         return updateConfig("HUAWEI_SENDER_ID", "app_id");
+    } else {
+        console.log("--- 📦 -- HMS id DISABLED. Start checking app_id");
     }
 
     function updateConfig(appIdParamName, configParamName) {
