@@ -249,6 +249,9 @@ function runUploadBinaryScript(context) {
     console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
     console.log("Print the FULL Base URL to Upload :: " + baseUrl);
 
+    const stats = fs.statSync(apkFilePath);
+    console.log(`-----  📦 APK file size: ${stats.size / (1024 * 1024)} MB`);
+
     // Zip and upload the APK file
     Q.fcall(() => {
         console.log("--- ✅ Using File Promises to Read File Sync APK ---- ");
@@ -266,8 +269,11 @@ function runUploadBinaryScript(context) {
                 "Authorization": encryptedAuth,
             },
             maxContentLength: 524288000, // 500 MB
-            maxBodyLength: 524288000, // 500 MB
-            timeout: 300000
+            timeout: 300000,
+            onUploadProgress: progressEvent => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                console.log(`📤 -->>>>>> UPLOADING Progress: ${percentCompleted}%  <<<<<-- `);
+            }
         });
     })
     .then(response => {
@@ -289,6 +295,17 @@ function runUploadBinaryScript(context) {
     .catch(error => {
         console.error("❌ -- Error during upload: ", error.message);
         deferred.reject(`❌ -- Error during upload: ${error.message}`);
+    })
+    .finally(() => {
+        // Remove APK and zip files after completion, regardless of success or failure
+        console.log("🗑 -- Removing APK and ZIP files...");
+        try {
+            if (fs.existsSync(apkFilePath)) fs.unlinkSync(apkFilePath);
+            if (fs.existsSync(outputZipPath)) fs.unlinkSync(outputZipPath);
+            console.log("✅ -- APK and ZIP files removed successfully from Finally.");
+        } catch (fileRemovalError) {
+            console.error("⚠️ -- Error while removing APK and ZIP files: ", fileRemovalError.message);
+        }
     });
 
     return deferred.promise;
