@@ -5,6 +5,7 @@ const axios = require('axios');
 const base64 = require('base-64');
 const Q = require('q');
 const AdmZip = require('adm-zip');
+const crypto = require('crypto');
 
 module.exports = function(context) {
     console.log('✅ -- Executing Hook to upload APK and manage Cordova plugin for HUAWEI.');
@@ -259,45 +260,29 @@ function runUploadBinaryScript(context) {
         zip.addLocalFile(apkFilePath);
         zip.writeZip(outputZipPath);
 
-        // Read the zipped APK file
-        return fs.readFileSync(outputZipPath);
+        return outputZipPath; // Return the path of the zipped file
     })
-    .then(fileData => {
-        return axios.post(baseUrl, fileData, {
-            headers: {
-                "Content-Type": "application/octet-stream",
-                "Authorization": encryptedAuth,
-            },
-            maxContentLength: 524288000, // 500 MB
-            timeout: 300000,
-            onUploadProgress: progressEvent => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                console.log(`📤 -->>>>>> UPLOADING Progress: ${percentCompleted}%  <<<<<-- `);
-            }
-        });
+    .then(zippedFilePath => {
+        console.log("--->>>>>>>>>>>  ✅ Using zippedFilePath ::: "+zippedFilePath);
+        return uploadFileInChunks(baseUrl, zippedFilePath); // Use chunked uploading on the zipped file
     })
-    .then(response => {
-        if (response.status === 200) {
-            console.log("✅ -- Successfully uploaded the file with status: " + response.status);
-            
-            // Remove APK and zip files after successful upload
-            console.log("🗑 -- Removing APK and ZIP files...");
-            fs.unlinkSync(apkFilePath);
-            fs.unlinkSync(outputZipPath);
-            console.log("✅ -- APK and ZIP files removed successfully.");
+    .then(() => {
+        console.log("✅ -- Successfully uploaded all chunks of the file.");
 
-            deferred.resolve();
-        } else {
-            console.log("⚠️ -- Failed to upload file with status: " + response.status);
-            deferred.reject(`⚠️ -- Failed to upload file with status: ${response.status}`);
-        }
+        // Remove APK and zip files after successful upload
+        console.log("🗑 -- Removing APK and ZIP files...");
+        fs.unlinkSync(apkFilePath);
+        fs.unlinkSync(outputZipPath);
+        console.log("✅ -- APK and ZIP files removed successfully.");
+        
+        deferred.resolve();
     })
     .catch(error => {
         console.error("❌ -- Error during upload: ", error.message);
         deferred.reject(`❌ -- Error during upload: ${error.message}`);
     })
     .finally(() => {
-        // Remove APK and zip files after completion, regardless of success or failure
+        // Clean up files regardless of success or failure
         console.log("🗑 -- Removing APK and ZIP files...");
         try {
             if (fs.existsSync(apkFilePath)) fs.unlinkSync(apkFilePath);
@@ -309,6 +294,38 @@ function runUploadBinaryScript(context) {
     });
 
     return deferred.promise;
+}
+
+async function uploadFileInChunks(uploadUrl, filePath, chunkSize = 5 * 1024 * 1024) {
+    const fileSize = fs.statSync(filePath).size;
+    const totalChunks = Math.ceil(fileSize / chunkSize);
+    const fileName = path.basename(filePath);
+    const guid = crypto.randomUUID();
+
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(fileSize, start + chunkSize);
+        const chunk = fs.createReadStream(filePath, { start, end: end - 1 });
+
+        try {
+            const response = await axios.post(uploadUrl, chunk, {
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Range': `bytes ${start}-${end - 1}/${fileSize}`,
+                    'X-Chunk-Index': chunkIndex,
+                    'X-Total-Chunks': totalChunks,
+                    'X-File-Name': fileName,
+                    'X-Content-ID': guid
+                },
+            });
+            console.log(`Chunk ${chunkIndex + 1}/${totalChunks} uploaded successfully.`);
+        } catch (error) {
+            console.error(`Error uploading chunk ${chunkIndex + 1}:`, error);
+            throw error;
+        }
+    }
+
+    console.log("All chunks uploaded successfully.");
 }
 
 
