@@ -18,7 +18,16 @@ module.exports = function(ctx) {
     console.log(" -- repositoriesGradlePath: "+repositoriesGradlePath);
 
     var args = process.argv.slice(2);
-    var hmsBuild = true;
+
+    // Get variables from huawei_info.json file
+    const projectRoot = ctx.opts.projectRoot;
+    const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    console.log("✅ -- Reading Huawei info from file: " + jsonFilePath);
+
+    const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    const { isBuildHuawei } = huaweiInfo;
+    var hmsBuild = isBuildHuawei;
+
     console.log("-- ✅ Huawei Add Extra Dependencies HMS Build -- :  " + hmsBuild);
 
     if(hmsBuild) {

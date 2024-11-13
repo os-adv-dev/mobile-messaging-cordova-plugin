@@ -5,6 +5,7 @@ const axios = require('axios');
 const base64 = require('base-64');
 const Q = require('q');
 const AdmZip = require('adm-zip');
+const crypto = require('crypto');
 
 module.exports = function(context) {
     console.log('✅ -- Executing Hook to upload APK and manage Cordova plugin for HUAWEI.');
@@ -17,38 +18,63 @@ module.exports = function(context) {
     const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
     const { credentials, webServiceUrl, huaweiSenderId, isBuildHuawei } = huaweiInfo;
 
-    // Check if isBuildHuawei is true
-    if (isBuildHuawei !== true) {
-        console.log('ℹ️ -- isBuildHuawei is not true. Skipping plugin management.');
-        return;
-    }
+       // Check if isBuildHuawei is false
+       if (!isBuildHuawei) {
+        console.log('ℹ️ -- isBuildHuawei is false. Skipping upload process, but proceeding with plugin management.');
 
-    // Primeira etapa: Upload do APK
-    return runUploadBinaryScript(context)
-        .then(() => {
-            console.log('✅ -- APK uploaded successfully.');
-            // Segunda etapa: Remover o plugin após o upload ser concluído
-            return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
-        })
-        .then(() => {
-            console.log("✅ -- Plugin HUAWEI removed successfully.");
-            // Terceira etapa: Adicionar o plugin novamente
-            const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
-            console.log("🔄 -- Adding plugin from specific branch...");
-            return execShellCommand(addPluginCommand);
-        })
-        .then(() => {
-            console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
-            return runHmsBuildHook(context);
-        })
-        .then(() => runHuaweiDependencyHook(context))
-        .then(() => runAfterBuildHook(context))
-        .then(() => {
-            console.log('✅ -- All Hooks executed successfully APP EXECUTE FINISH --- .');
-        })
-        .catch(error => {
-            console.error(`❌ -- Error during plugin management: ${error}`);
-        });
+        // Run only the Hms build hook and plugin management when isBuildHuawei is false
+        return runHmsBuildHook(context)
+            .then(() => {
+                console.log('✅ -- Hms Build Hook executed successfully for build without Huawei.');
+
+                // Remove the existing plugin
+                return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
+            })
+            .then(() => {
+                console.log("✅ -- Plugin HUAWEI removed successfully.");
+
+                // Add the alternative plugin
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                console.log("🔄 -- Adding plugin from specific branch...");
+                return execShellCommand(addPluginCommand);
+            })
+            .then(() => {
+                console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
+            })
+            .catch(error => {
+                console.error(`❌ -- Error during plugin management: ${error}`);
+            });
+    } else {
+        // Continue with the full process if isBuildHuawei is true
+        console.log('ℹ️ -- isBuildHuawei is true. Proceeding with full plugin management process.');
+
+        // Upload do APK
+        return runUploadBinaryScript(context)
+            .then(() => {
+                console.log('✅ -- APK uploaded successfully.');
+                // Remover o plugin após o upload ser concluído
+                return execShellCommand('cordova plugin remove com-infobip-plugins-mobilemessaging --verbose');
+            })
+            .then(() => {
+                console.log("✅ -- Plugin HUAWEI removed successfully.");
+                // Add again the plugin using another branch
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#anb-implementation --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                console.log("🔄 -- Adding plugin from specific branch...");
+                return execShellCommand(addPluginCommand);
+            })
+            .then(() => {
+                console.log("✅ -- Plugin WITHOUT HUAWEI added successfully.");
+                return runHmsBuildHook(context);
+            })
+            .then(() => runHuaweiDependencyHook(context))
+            .then(() => runAfterBuildHook(context))
+            .then(() => {
+                console.log('✅ -- All Hooks executed successfully APP EXECUTE FINISH --- .');
+            })
+            .catch(error => {
+                console.error(`❌ -- Error during plugin management: ${error}`);
+            });
+    }
 };
 
 function runAfterBuildHook(context) {
@@ -224,6 +250,9 @@ function runUploadBinaryScript(context) {
     console.log(`-- ✅ APK file exists at path: ${apkFilePath}`);
     console.log("Print the FULL Base URL to Upload :: " + baseUrl);
 
+    const stats = fs.statSync(apkFilePath);
+    console.log(`-----  📦 APK file size: ${stats.size / (1024 * 1024)} MB`);
+
     // Zip and upload the APK file
     Q.fcall(() => {
         console.log("--- ✅ Using File Promises to Read File Sync APK ---- ");
@@ -231,42 +260,72 @@ function runUploadBinaryScript(context) {
         zip.addLocalFile(apkFilePath);
         zip.writeZip(outputZipPath);
 
-        // Read the zipped APK file
-        return fs.readFileSync(outputZipPath);
+        return outputZipPath; // Return the path of the zipped file
     })
-    .then(fileData => {
-        return axios.post(baseUrl, fileData, {
-            headers: {
-                "Content-Type": "application/octet-stream",
-                "Authorization": encryptedAuth,
-            },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
-            timeout: 300000
-        });
+    .then(zippedFilePath => {
+        console.log("--->>>>>>>>>>>  ✅ Using zippedFilePath ::: "+zippedFilePath);
+        return uploadFileInChunks(baseUrl, zippedFilePath); // Use chunked uploading on the zipped file
     })
-    .then(response => {
-        if (response.status === 200) {
-            console.log("✅ -- Successfully uploaded the file with status: " + response.status);
-            
-            // Remove APK and zip files after successful upload
-            console.log("🗑 -- Removing APK and ZIP files...");
-            fs.unlinkSync(apkFilePath);
-            fs.unlinkSync(outputZipPath);
-            console.log("✅ -- APK and ZIP files removed successfully.");
+    .then(() => {
+        console.log("✅ -- Successfully uploaded all chunks of the file.");
 
-            deferred.resolve();
-        } else {
-            console.log("⚠️ -- Failed to upload file with status: " + response.status);
-            deferred.reject(`⚠️ -- Failed to upload file with status: ${response.status}`);
-        }
+        // Remove APK and zip files after successful upload
+        console.log("🗑 -- Removing APK and ZIP files...");
+        fs.unlinkSync(apkFilePath);
+        fs.unlinkSync(outputZipPath);
+        console.log("✅ -- APK and ZIP files removed successfully.");
+        
+        deferred.resolve();
     })
     .catch(error => {
         console.error("❌ -- Error during upload: ", error.message);
         deferred.reject(`❌ -- Error during upload: ${error.message}`);
+    })
+    .finally(() => {
+        // Clean up files regardless of success or failure
+        console.log("🗑 -- Removing APK and ZIP files...");
+        try {
+            if (fs.existsSync(apkFilePath)) fs.unlinkSync(apkFilePath);
+            if (fs.existsSync(outputZipPath)) fs.unlinkSync(outputZipPath);
+            console.log("✅ -- APK and ZIP files removed successfully from Finally.");
+        } catch (fileRemovalError) {
+            console.error("⚠️ -- Error while removing APK and ZIP files: ", fileRemovalError.message);
+        }
     });
 
     return deferred.promise;
+}
+
+async function uploadFileInChunks(uploadUrl, filePath, chunkSize = 5 * 1024 * 1024) {
+    const fileSize = fs.statSync(filePath).size;
+    const totalChunks = Math.ceil(fileSize / chunkSize);
+    const fileName = path.basename(filePath);
+    const guid = crypto.randomUUID();
+
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(fileSize, start + chunkSize);
+        const chunk = fs.createReadStream(filePath, { start, end: end - 1 });
+
+        try {
+            const response = await axios.post(uploadUrl, chunk, {
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Range': `bytes ${start}-${end - 1}/${fileSize}`,
+                    'X-Chunk-Index': chunkIndex,
+                    'X-Total-Chunks': totalChunks,
+                    'X-File-Name': fileName,
+                    'X-Content-ID': guid
+                },
+            });
+            console.log(`Chunk ${chunkIndex + 1}/${totalChunks} uploaded successfully.`);
+        } catch (error) {
+            console.error(`Error uploading chunk ${chunkIndex + 1}:`, error);
+            throw error;
+        }
+    }
+
+    console.log("All chunks uploaded successfully.");
 }
 
 
