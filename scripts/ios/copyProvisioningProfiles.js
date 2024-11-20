@@ -117,6 +117,14 @@ module.exports = function(context) {
       console.log(`Dir ${targetFolder} already exists`);
     }
 
+    // List files in the destination folder before copying
+    console.log('👉 Listing contents of the target folder before copying:');
+    if (fs.existsSync(targetFolder)) {
+      listDirectoryContents(targetFolder);
+    } else {
+      console.log('🚨 Target folder does not exist.');
+    }
+
     // Copy provisioning profiles
     copyFolderRecursiveSync(
       srcFolder,
