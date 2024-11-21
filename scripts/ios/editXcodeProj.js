@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const parseString = require('xml2js').parseString;
+const plist = require('plist'); 
 
 function getProjectName() {
     return new Promise((resolve, reject) => {
@@ -23,6 +24,29 @@ function getProjectName() {
             });
         });
     });
+}
+
+function getProvisioningProfileType(provisioningProfilePath) {
+    const profileContent = fs.readFileSync(provisioningProfilePath, 'utf8');
+
+    // Extract the embedded plist
+    const plistStart = profileContent.indexOf('<?xml');
+    const plistEnd = profileContent.indexOf('</plist>') + '</plist>'.length;
+    const plistContent = profileContent.substring(plistStart, plistEnd);
+
+    const parsedPlist = plist.parse(plistContent);
+
+    // Determine profile type
+    const entitlements = parsedPlist.Entitlements || {};
+    const provisionedDevices = parsedPlist.ProvisionedDevices;
+
+    if (provisionedDevices && entitlements['aps-environment'] === 'development') {
+        return 'Development';
+    } else if (provisionedDevices) {
+        return 'AdHoc';
+    } else {
+        return 'Distribution';
+    }
 }
 
 function getProvisioningInfo() {
@@ -72,7 +96,7 @@ function backupPbxProj(pbxprojPath, backupName) {
     });
 }
 
-function updatePbxProj(pbxprojPath, teamID, ppName) {
+function updatePbxProj(pbxprojPath, teamID, ppName, codeSignIdentity) {
     return new Promise((resolve, reject) => {
         console.log('👉 Updating project.pbxproj at:', pbxprojPath);
 
@@ -86,7 +110,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
             const productNamePattern = /PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension\s*;/g;
 
             let updatedPbxproj = data.replace(productNamePattern, (match) => {
-                return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
+                return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tCODE_SIGN_IDENTITY = "${codeSignIdentity}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
             });
 
             const swiftVersionPattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
@@ -112,7 +136,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName) {
                     console.error('🚨 Error writing updated project.pbxproj:', err.message);
                     return reject(err);
                 }
-                console.log(`✅ Successfully updated the project.pbxproj file with teamID: ${teamID}`);
+                console.log(`✅ Successfully updated the project.pbxproj file with teamID: ${teamID} and CODE_SIGN_IDENTITY: ${codeSignIdentity}`);
                 resolve();
             });
         });
@@ -135,8 +159,44 @@ function editXcodeProj() {
                     throw new Error(`The path to project.pbxproj was not found: ${xcodeprojPath}`);
                 }
 
+                // Path to the provisioning profiles folder
+                const provisioningProfilesFolder = path.join('plugins', 'com-infobip-plugins-mobilemessaging', 'provisioning-profiles');
+
+                // Ensure the folder exists
+                if (!fs.existsSync(provisioningProfilesFolder)) {
+                    throw new Error(`🚨 Provisioning profiles folder not found at ${provisioningProfilesFolder}`);
+                }
+
+                // Get all *.mobileprovision files
+                const provisioningFiles = fs
+                    .readdirSync(provisioningProfilesFolder)
+                    .filter(file => file.endsWith('.mobileprovision'));
+
+                if (provisioningFiles.length === 0) {
+                    throw new Error('🚨 No .mobileprovision files found in the provisioning profiles folder.');
+                }
+
+                // Detect the type of the first provisioning profile
+                const provisioningProfilePath = path.join(provisioningProfilesFolder, provisioningFiles[0]);
+                const profileType = getProvisioningProfileType(provisioningProfilePath);
+
+                console.log(`👉 Provisioning profile type detected: ${profileType}`);
+
+                // Set CODE_SIGN_IDENTITY dynamically based on the profile type
+                let codeSignIdentity = '';
+                if (profileType === 'Development') {
+                    codeSignIdentity = 'iPhone Developer';
+                } else if (profileType === 'Distribution' || profileType === 'AdHoc') {
+                    codeSignIdentity = 'iPhone Distribution';
+                } else {
+                    throw new Error(`🚨 Unknown provisioning profile type: ${profileType}`);
+                }
+
+                console.log(`👉 Setting CODE_SIGN_IDENTITY to: ${codeSignIdentity}`);
+
+                // Backup and update the pbxproj file
                 return backupPbxProj(xcodeprojPath, 'project-before-edit.pbxproj')
-                    .then(() => updatePbxProj(xcodeprojPath, teamID, provisioningProfileName))
+                    .then(() => updatePbxProj(xcodeprojPath, teamID, provisioningProfileName, codeSignIdentity))
                     .then(() => backupPbxProj(xcodeprojPath, 'project-after_hook.pbxproj'));
             });
         })
