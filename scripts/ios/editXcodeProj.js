@@ -110,7 +110,12 @@ function updatePbxProj(pbxprojPath, teamID, ppName, codeSignIdentity) {
             const productNamePattern = /PRODUCT_NAME\s*=\s*MobileMessagingNotificationExtension\s*;/g;
 
             let updatedPbxproj = data.replace(productNamePattern, (match) => {
-                return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tCODE_SIGN_IDENTITY = "${codeSignIdentity}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
+
+                if (codeSignIdentity === "iPhone Distribution") {
+                    return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tCODE_SIGN_IDENTITY = "${codeSignIdentity}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
+                } else {
+                    return `${match}\n\t\t\t\t"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "${ppName}";\n\t\t\t\tFRAMEWORK_SEARCH_PATHS = "$(inherited)";`;
+                } 
             });
 
             const swiftVersionPattern = /PRODUCT_NAME\s*=\s*"\$\(TARGET_NAME\)";/g;
