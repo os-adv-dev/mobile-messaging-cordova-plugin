@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const parseString = require('xml2js').parseString;
+const { execSync } = require('child_process');
 const plist = require('plist'); 
 
 function getProjectName() {
@@ -27,25 +28,26 @@ function getProjectName() {
 }
 
 function getProvisioningProfileType(provisioningProfilePath) {
-    const profileContent = fs.readFileSync(provisioningProfilePath, 'utf8');
+    try {
+        // Use the `security` command to extract the plist from the .mobileprovision file
+        const command = `security cms -D -i "${provisioningProfilePath}"`;
+        const output = execSync(command, { encoding: 'utf8' }); // Run the command and get the plist as output
+        const parsedPlist = plist.parse(output);
 
-    // Extract the embedded plist
-    const plistStart = profileContent.indexOf('<?xml');
-    const plistEnd = profileContent.indexOf('</plist>') + '</plist>'.length;
-    const plistContent = profileContent.substring(plistStart, plistEnd);
+        // Determine the profile type
+        const entitlements = parsedPlist.Entitlements || {};
+        const provisionedDevices = parsedPlist.ProvisionedDevices;
 
-    const parsedPlist = plist.parse(plistContent);
-
-    // Determine profile type
-    const entitlements = parsedPlist.Entitlements || {};
-    const provisionedDevices = parsedPlist.ProvisionedDevices;
-
-    if (provisionedDevices && entitlements['aps-environment'] === 'development') {
-        return 'Development';
-    } else if (provisionedDevices) {
-        return 'AdHoc';
-    } else {
-        return 'Distribution';
+        if (provisionedDevices && entitlements['aps-environment'] === 'development') {
+            return 'Development';
+        } else if (provisionedDevices) {
+            return 'AdHoc';
+        } else {
+            return 'Distribution';
+        }
+    } catch (error) {
+        console.error('🚨 Error extracting provisioning profile type:', error.message);
+        throw new Error(`Failed to determine provisioning profile type for ${provisioningProfilePath}`);
     }
 }
 
