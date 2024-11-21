@@ -127,6 +127,7 @@ function updatePbxProj(pbxprojPath, teamID, ppName, codeSignIdentity) {
 
 function editXcodeProj(context) {
     // Determine build mode from context.cmdLine
+    console.log("👉 context.cmdLine ");
     console.log("👉 context.cmdLine: " + context.cmdLine);
     let buildMode = 'Debug';
     if (context.cmdLine.toLowerCase().indexOf('release') >= 0) {
