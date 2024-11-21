@@ -26,29 +26,6 @@ function getProjectName() {
     });
 }
 
-function getProvisioningProfileType(provisioningProfilePath) {
-    const profileContent = fs.readFileSync(provisioningProfilePath, 'utf8');
-
-    // Extract the embedded plist
-    const plistStart = profileContent.indexOf('<?xml');
-    const plistEnd = profileContent.indexOf('</plist>') + '</plist>'.length;
-    const plistContent = profileContent.substring(plistStart, plistEnd);
-
-    const parsedPlist = plist.parse(plistContent);
-
-    // Determine profile type
-    const entitlements = parsedPlist.Entitlements || {};
-    const provisionedDevices = parsedPlist.ProvisionedDevices;
-
-    if (provisionedDevices && entitlements['aps-environment'] === 'development') {
-        return 'Development';
-    } else if (provisionedDevices) {
-        return 'AdHoc';
-    } else {
-        return 'Distribution';
-    }
-}
-
 function getProvisioningInfo() {
     return new Promise((resolve, reject) => {
         const jsonFilePath = path.join(process.cwd(), 'provisioning_info.json');
@@ -148,7 +125,15 @@ function updatePbxProj(pbxprojPath, teamID, ppName, codeSignIdentity) {
     });
 }
 
-function editXcodeProj() {
+function editXcodeProj(context) {
+    // Determine build mode from context.cmdLine
+    console.log("👉 context.cmdLine: " + context.cmdLine);
+    let buildMode = 'Debug';
+    if (context.cmdLine.toLowerCase().indexOf('release') >= 0) {
+        buildMode = 'Release';
+    }
+    console.log(`👉 Build mode detected: ${buildMode}`);
+
     return getProjectName()
         .then((projectName) => {
             if (!projectName) {
@@ -164,37 +149,14 @@ function editXcodeProj() {
                     throw new Error(`The path to project.pbxproj was not found: ${xcodeprojPath}`);
                 }
 
-                // Path to the provisioning profiles folder
-                const provisioningProfilesFolder = path.join('plugins', 'com-infobip-plugins-mobilemessaging', 'provisioning-profiles');
-
-                // Ensure the folder exists
-                if (!fs.existsSync(provisioningProfilesFolder)) {
-                    throw new Error(`🚨 Provisioning profiles folder not found at ${provisioningProfilesFolder}`);
-                }
-
-                // Get all *.mobileprovision files
-                const provisioningFiles = fs
-                    .readdirSync(provisioningProfilesFolder)
-                    .filter(file => file.endsWith('.mobileprovision'));
-
-                if (provisioningFiles.length === 0) {
-                    throw new Error('🚨 No .mobileprovision files found in the provisioning profiles folder.');
-                }
-
-                // Detect the type of the first provisioning profile
-                const provisioningProfilePath = path.join(provisioningProfilesFolder, provisioningFiles[0]);
-                const profileType = getProvisioningProfileType(provisioningProfilePath);
-
-                console.log(`👉 Provisioning profile type detected: ${profileType}`);
-
-                // Set CODE_SIGN_IDENTITY dynamically based on the profile type
+                // Determine CODE_SIGN_IDENTITY based on build mode
                 let codeSignIdentity = '';
-                if (profileType === 'Development') {
-                    codeSignIdentity = 'iPhone Developer';
-                } else if (profileType === 'Distribution' || profileType === 'AdHoc') {
-                    codeSignIdentity = 'iPhone Distribution';
+                if (buildMode === 'Debug') {
+                    codeSignIdentity = 'iPhone Developer'; // Development signing identity
+                } else if (buildMode === 'Release') {
+                    codeSignIdentity = 'iPhone Distribution'; // Distribution signing identity
                 } else {
-                    throw new Error(`🚨 Unknown provisioning profile type: ${profileType}`);
+                    throw new Error(`🚨 Unknown build mode: ${buildMode}`);
                 }
 
                 console.log(`👉 Setting CODE_SIGN_IDENTITY to: ${codeSignIdentity}`);
@@ -212,6 +174,5 @@ function editXcodeProj() {
 }
 
 module.exports = function (context) {
-    console.log("👉 context.cmdLine: " + context.cmdLine);
     return editXcodeProj();
 };
