@@ -80,37 +80,17 @@
 			<array><string>CloudDocuments</string></array>
 		</config-file>
 
+		<!-- Pods for the main target -->
 		<podspec>
 			<pods use-frameworks="true">
-				<pod name="MobileMessaging" spec="12.6.2" />
-				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-				<pod name="MobileMessaging/InAppChat" spec="12.6.2" />
-				<pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-				<pod name="MobileMessaging/Inbox" spec="12.6.2" />
+				<pod name="MobileMessaging" spec="12.16.0" />
+				<pod name="MobileMessaging/InAppChat" spec="12.16.0" />
+				<pod name="MobileMessaging/Inbox" spec="12.16.0" />
 			</pods>
 		</podspec>
-		
-
-		<!-- Pods for the main target -->
-	<!--
-	    <podspec>
-	        <pods use-frameworks="true">
-	            <pod name="MobileMessaging" spec="12.6.2" />
-	            <pod name="MobileMessaging/Geofencing" spec="12.6.2" />
-	            <pod name="MobileMessaging/InAppChat" spec="12.6.2" />
-	            <pod name="MobileMessaging/Inbox" spec="12.6.2" />
-	        </pods>
-	    </podspec> 
-
-	    <framework custom="true" type="podspec">
-	        <![CDATA[
-	        target 'MobileMessagingNotificationExtension' do
-	            inherit! :search_paths
-	        end
-	        ]]>
-	    </framework>-->
 
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
+		<source-file src="src/ios/CustomMessageHandlingDelegate.swift" />
 
 	<preference name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
 	<preference name="IOS_EXTENSION_APP_GROUP" value="$IOS_EXTENSION_APP_GROUP" />

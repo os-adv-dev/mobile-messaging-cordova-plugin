@@ -1,4 +1,3 @@
-
 import Foundation
 import UIKit
 import MobileMessaging
@@ -11,7 +10,6 @@ class MMConfiguration {
         static let carrierInfoSendingDisabled = "carrierInfoSendingDisabled"
         static let systemInfoSendingDisabled = "systemInfoSendingDisabled"
         static let applicationCodePersistingDisabled = "applicationCodePersistingDisabled"
-        static let geofencingEnabled = "geofencingEnabled"
         static let inAppChatEnabled = "inAppChatEnabled"
         static let fullFeaturedInAppsEnabled = "fullFeaturedInAppsEnabled"
         static let applicationCode = "applicationCode"
@@ -29,7 +27,6 @@ class MMConfiguration {
     }
 
     let appCode: String
-    let geofencingEnabled: Bool
     let inAppChatEnabled: Bool
     let fullFeaturedInAppsEnabled: Bool
     let messageStorageEnabled: Bool
@@ -53,7 +50,6 @@ class MMConfiguration {
         }
 
         self.appCode = appCode
-        self.geofencingEnabled = false
         self.inAppChatEnabled = rawConfig[MMConfiguration.Keys.inAppChatEnabled].unwrap(orDefault: false)
         self.fullFeaturedInAppsEnabled = rawConfig[MMConfiguration.Keys.fullFeaturedInAppsEnabled].unwrap(orDefault: false)
         self.forceCleanup = ios[MMConfiguration.Keys.forceCleanup].unwrap(orDefault: false)
@@ -260,6 +256,7 @@ fileprivate class MobileMessagingEventsManager {
         super.pluginInitialize()
         self.messageStorageAdapter = MessageStorageAdapter(plugin: self)
         MobileMessagingPluginApplicationDelegate.install()
+        MobileMessaging.messageHandlingDelegate = CustomMessageHandlingDelegate()
         self.eventsManager = MobileMessagingEventsManager(plugin: self)
         performEarlyStartIfPossible()
     }
@@ -290,22 +287,6 @@ fileprivate class MobileMessagingEventsManager {
 
         isStarted = true
         commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
-    }
-
-    @objc(checkPermissions:)
-    func checkPermissions(command: CDVInvokedUrlCommand) {
-        let center = UNUserNotificationCenter.current()
-
-        center.getNotificationSettings { settings in
-            let isEnabled = (settings.authorizationStatus == .authorized)
-            if isEnabled {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: "Notifications are enabled")
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            } else {
-                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Notifications are disabled")
-                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            }
-        }
     }
 
     func registerReceiver(_ command: CDVInvokedUrlCommand) {
@@ -741,6 +722,7 @@ extension MM_MTMessage {
     override func dictionary() -> [String: Any] {
         var result = [String: Any]()
         result["messageId"] = messageId
+        result["title"] = title
         result["body"] = text
         result["sound"] = sound
         result["silent"] = isSilent
@@ -791,24 +773,6 @@ extension MMBaseMessage {
             result["silent"] = silent
         }
 
-        return result
-    }
-}
-
-extension MMRegion {
-    func dictionary() -> [String: Any] {
-        var areaCenter = [String: Any]()
-        areaCenter["lat"] = center.latitude
-        areaCenter["lon"] = center.longitude
-
-        var area = [String: Any]()
-        area["id"] = identifier
-        area["center"] = areaCenter
-        area["radius"] = radius
-        area["title"] = title
-
-        var result = [String: Any]()
-        result["area"] = area
         return result
     }
 }
@@ -938,7 +902,7 @@ private func createErrorPluginResult(error: NSError) -> CDVPluginResult {
 }
 
 private func createErrorPluginResult(description: String, errorCode: Int? = nil, domain: String? = "com.infobip.mobile-messaging.cordova-plugin.ios-wrapper") -> CDVPluginResult {
-    var error: [AnyHashable: Any] = ["descritpion": description]
+    var error: [AnyHashable: Any] = ["description": description]
     if let errorCode = errorCode {
         error["code"] = errorCode
     }
@@ -990,3 +954,4 @@ extension UIApplication {
         return controller
     }
 }
+
