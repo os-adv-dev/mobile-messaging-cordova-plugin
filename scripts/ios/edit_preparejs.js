@@ -33,7 +33,7 @@ module.exports = function (context) {
 
         // Modify Podfile-custom by adding the target block
         let podfileCustomContent = fs.readFileSync(podfileCustomPath, 'utf8');
-        const newTargetBlock = "\\ttarget 'MobileMessagingNotificationExtension' do\\n\\t\\tinherit! :search_paths\\n\\t\\t# pod 'MobileMessaging', '12.6.2'\\n\\tend\\nend";
+        const newTargetBlock = "\\ttarget 'MobileMessagingNotificationExtension' do\\n\\t\\tinherit! :search_paths\\n\\t\\t# pod 'MobileMessaging', '12.16.0'\\n\\tend\\nend";
         podfileCustomContent = podfileCustomContent.replace(/end\\s*$/, newTargetBlock);
 
         // Write the modified content back to Podfile-custom
