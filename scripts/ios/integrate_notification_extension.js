@@ -53,8 +53,8 @@ module.exports = function(ctx) {
         }
 
         // Get the values from package.json
-        const iosExtensionAppCode = packageJson.cordova.plugins.["com-infobip-plugins-mobilemessaging"].IOS_EXTENSION_APP_CODE;
-        const iosExtensionAppGroup = packageJson.cordova.plugins.["com-infobip-plugins-mobilemessaging"].IOS_EXTENSION_APP_GROUP;
+        const iosExtensionAppCode = packageJson.cordova.plugins["com-infobip-plugins-mobilemessaging"].IOS_EXTENSION_APP_CODE;
+        const iosExtensionAppGroup = packageJson.cordova.plugins["com-infobip-plugins-mobilemessaging"].IOS_EXTENSION_APP_GROUP;
 
         if (!iosExtensionAppCode || !iosExtensionAppGroup) {
             console.error('Missing iosExtensionAppCode or iosExtensionAppGroup in package.json.');
