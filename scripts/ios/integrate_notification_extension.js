@@ -23,6 +23,7 @@ module.exports = function(ctx) {
         const appConfig = new ConfigParser('config.xml');
         const pluginConfig = appConfig.getPlugin(ctx.opts.plugin.id);
 
+        /*
         const args = process.argv;
         let iosExtensionAppCode;
         let iosExtensionAppGroup;
@@ -36,6 +37,28 @@ module.exports = function(ctx) {
                 const stringArray = arg.split("=");
                 iosExtensionAppGroup = stringArray.slice(-1).pop();
             }
+        }
+        */
+
+        const packageJsonFilePath = path.join(ctx.opts.projectRoot, 'package.json');
+
+        // Read and parse the package.json file
+        let packageJson;
+        try {
+            const packageJsonContent = fs.readFileSync(packageJsonFilePath, 'utf8');
+            packageJson = JSON.parse(packageJsonContent);
+        } catch (error) {
+            console.error(`Failed to read or parse package.json: ${error.message}`);
+            process.exit(1);
+        }
+
+        // Get the values from package.json
+        const iosExtensionAppCode = packageJson.iosExtensionAppCode;
+        const iosExtensionAppGroup = packageJson.iosExtensionAppGroup;
+
+        if (!iosExtensionAppCode || !iosExtensionAppGroup) {
+            console.error('Missing iosExtensionAppCode or iosExtensionAppGroup in package.json.');
+            process.exit(1);
         }
 
         console.log(" --- ✅ --- Variables --- IOS_EXTENSION_APP_GROUP: " + iosExtensionAppGroup);
