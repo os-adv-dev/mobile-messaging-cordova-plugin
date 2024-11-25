@@ -40,7 +40,7 @@
 	<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js"/>
 
 	<!-- before_plugin_add -->
-	<hook type="before_build" src="scripts/ios/editXcodeProj.js" />
+	<hook type="after_prepare" src="scripts/ios/editXcodeProj.js" />
 	<hook type="before_plugin_install" src="scripts/ios/edit-podfile-js.js"/>
 
 	<hook type="before_prepare" src="scripts/ios/list_pp_folder.js"/>
