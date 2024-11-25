@@ -17,7 +17,7 @@ podfile_content = File.read(podfile_path)
 secondary_target_block = <<-PODBLOCK
 target 'MobileMessagingNotificationExtension' do
     inherit! :search_paths
-    # pod 'MobileMessaging', '12.6.2'
+    # pod 'MobileMessaging', '12.16.0'
 end
 PODBLOCK
 
