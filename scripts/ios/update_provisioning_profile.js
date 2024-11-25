@@ -55,42 +55,12 @@ module.exports = function(context) {
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
     const jsonFilePath = path.join(projectRoot, 'provisioning_info.json');
 
-
-    const provisioningProfilesFolder = path.join(projectRoot, 'plugins', 'com-infobip-plugins-mobilemessaging', 'provisioning-profiles');
-
-    // Check if the provisioning profiles folder exists
-    if (!fs.existsSync(provisioningProfilesFolder)) {
-        throw new Error(`Provisioning profiles folder not found at ${provisioningProfilesFolder}`);
-    }
-
-    // Get all *.mobileprovision files in the folder
-    const provisioningFiles = fs
-        .readdirSync(provisioningProfilesFolder)
-        .filter(file => file.endsWith('.mobileprovision'));
-
-    if (provisioningFiles.length === 0) {
-        throw new Error('No .mobileprovision files found in the provisioning profiles folder.');
-    }
-
-    // Detect the type of the first *.mobileprovision file
-    const provisioningProfilePath = path.join(provisioningProfilesFolder, provisioningFiles[0]);
-    const profileType = getProvisioningProfileType(provisioningProfilePath);
-
-    console.log(`Provisioning profile type detected: ${profileType}`);
-
-    // Set CODE_SIGN_IDENTITY based on the profile type
-    let codeSignIdentity = '';
-    if (profileType === 'Development') {
-        codeSignIdentity = 'iPhone Developer';
-    } else if (profileType === 'Distribution' || profileType === 'AdHoc') {
+    let codeSignIdentity = 'iPhone Developer';
+    if (context.cmdLine.toLowerCase().indexOf('release') >= 0) {
         codeSignIdentity = 'iPhone Distribution';
-    } else {
-        throw new Error(`Unknown provisioning profile type: ${profileType}`);
     }
 
     console.log(`Setting CODE_SIGN_IDENTITY to: ${codeSignIdentity}`);
-
-
     
     return waitForFile(completionFilePath).then(() => {
         const projectName = getProjectName();
