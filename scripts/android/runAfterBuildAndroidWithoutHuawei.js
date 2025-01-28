@@ -84,8 +84,25 @@ function runAfterBuildHook(context) {
     
     const isDebug = context.cmdLine.includes('debug');
     const projectRoot = context.opts.projectRoot;
-    const gradlewPath = path.join(projectRoot, 'platforms/android/gradlew');
     const platformRoot = path.join(projectRoot, 'platforms/android');
+    //const gradlewPath = path.join(projectRoot, 'platforms/android/gradlew');
+    // Determine the gradlewPath based on the cordova-android version
+    let gradlewPath = path.join(context.opts.projectRoot, 'platforms/android/gradlew');
+    const packageJsonPath = path.join(context.opts.projectRoot, 'node_modules/cordova-android/package.json');
+    
+    if (fs.existsSync(packageJsonPath)) {
+        const packageJson = require(packageJsonPath);
+        const cordovaAndroidVersion = packageJson.version;
+        console.log(`📦 -- Detected cordova-android version: ${cordovaAndroidVersion}`);
+        
+        if (parseInt(cordovaAndroidVersion.split('.')[0], 10) >= 13) {
+            gradlewPath = path.join(context.opts.projectRoot, 'platforms/android/tools/gradlew');
+        }
+    } else {
+        console.warn("⚠️ -- Could not determine cordova-android version. Defaulting to version 12 path.");
+    }
+
+    console.log(`📂 -- Using gradlewPath: ${gradlewPath}`);
     
     console.log(`📂  📦  📦  📦 ------  Starting Gradle build: ${isDebug ? 'Debug' : 'Release'}...`);
 
