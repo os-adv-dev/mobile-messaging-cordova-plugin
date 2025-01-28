@@ -80,6 +80,7 @@ module.exports = function(context) {
 function runAfterBuildHook(context) {
     const deferred = Q.defer();
     console.log('✅ -- RUN BUILD APP WITHOUT HUAWEI NORMAL APK TO USE IN QR CODE --');
+    console.log("👉 Cordova Version: " + cordova.version);
     
     const isDebug = context.cmdLine.includes('debug');
     const projectRoot = context.opts.projectRoot;
