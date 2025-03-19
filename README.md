@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/com-infobip-plugins-mobilemessaging.svg)](https://www.npmjs.com/package/com-infobip-plugins-mobilemessaging)
 
-Mobile Messaging SDK is designed and developed to easily enable push notification channel in your mobile application. In almost no time of implementation you get push notification in your application and access to the features of [Infobip IP Messaging Platform](https://portal.infobip.com/push/). 
+Mobile Messaging SDK is designed and developed to easily enable push notification channel in your mobile application. In almost no time of implementation you get push notification in your application and access to the features of [Infobip IP Messaging Platform](https://www.infobip.com/en/products/mobile-app-messaging). 
 The document describes library integration steps for your Cordova project.
 
   * [Requirements](#requirements)
@@ -15,7 +15,7 @@ The document describes library integration steps for your Cordova project.
 - node (version 16.10.0 or higher)
 
 For iOS project:
-- Xcode 15
+- Xcode 16.x
 - Cocoapods 1.14.x
 - Minimum deployment target 12.0
 - [cordova-ios@7.x.x](https://cordova.apache.org/announcements/2023/07/10/cordova-ios-7.0.0.html)
@@ -34,7 +34,7 @@ For Huawei:
 ## Quick start guide
 This guide is designed to get you up and running with Mobile Messaging SDK plugin for Cordova:
 
-1. Make sure to [setup application at Infobip portal](https://www.infobip.com/docs/mobile-app-messaging/create-mobile-application-profile), if you haven't already.
+1. Make sure to [setup application at Infobip portal](https://www.infobip.com/docs/mobile-app-messaging/getting-started#create-and-enable-a-mobile-application-profile), if you haven't already.
 
 2. Add MobileMessaging plugin to your project, run in terminal:
     ```bash
@@ -71,8 +71,8 @@ This guide is designed to get you up and running with Mobile Messaging SDK plugi
                  ...
               </platform>
            ```
-   > ### Notice:
-   > Geofencing is not supported in 3.0.0-rc release, will be added in next releases
+   > ### Notice (when targeting Android 13):
+   > Starting from Android 13, Google requires to ask user for notification permission. Follow <a href="https://github.com/infobip/mobile-messaging-cordova-plugin/wiki/Android-13-Notification-Permission-Handling" target="_blank">this guide</a> to make a permission request.
 
 4. Configure Huawei build
 
@@ -245,7 +245,6 @@ You can change `plaform/android/app/build.gradle` or write sign config to `build
     
       this.mobileMessaging.init({
         applicationCode: '<your_application_code>',
-        geofencingEnabled: '<true/false>',
         ios: {
           notificationTypes: ['alert', 'badge', 'sound']
         },
@@ -276,7 +275,6 @@ MobileMessaging.init({
             multipleNotifications: <Boolean; set to 'true' to enable multiple notifications>,
             notificationAccentColor: <String; set to hex color value in format '#RRGGBB' or '#AARRGGBB'>
         },
-        geofencingEnabled: <Boolean; set to 'true' to enable geofencing inside the library>, // optional
         messageStorage: <Object; message storage implementation>, // optional
         defaultMessageStorage: <Boolean; set to 'true' to enable default message storage implementation>, // optional
         notificationCategories: [ // optional
@@ -317,7 +315,7 @@ MobileMessaging.init({
 #### More details on SDK features and FAQ you can find on [Wiki](https://github.com/infobip/mobile-messaging-cordova-plugin/wiki)
 
 <br>
-<p align="center"><b>NEXT STEPS: <a href="https://github.com/infobip/mobile-messaging-cordova-plugin/wiki/User-profile">User profile</a></b></p>
+<p align="center"><b>NEXT STEPS: <a href="https://github.com/infobip/mobile-messaging-cordova-plugin/wiki/Users-and-installations">Users and installations</a></b></p>
 <br>
 
 | If you have any questions or suggestions, feel free to send an email to support@infobip.com or create an <a href="https://github.com/infobip/mobile-messaging-cordova-plugin/issues" target="_blank">issue</a>. |

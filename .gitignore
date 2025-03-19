@@ -16,3 +16,4 @@
 /example/.idea/
 .idea/
 /libs/ios/Carthage/Checkouts
+.DS_Store
