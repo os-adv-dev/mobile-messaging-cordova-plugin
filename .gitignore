@@ -1,3 +1,5 @@
+.DS_Store
+
 # Installed node modules
 /node_modules/
 
@@ -14,3 +16,4 @@
 /example/.idea/
 .idea/
 /libs/ios/Carthage/Checkouts
+.DS_Store

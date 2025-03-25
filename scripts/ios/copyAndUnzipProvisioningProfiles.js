@@ -13,7 +13,7 @@ var {
     log,
     copyFromSourceToDestPath,
     checkIfFolderExists
-} = require("./utils");
+} = require("../utils");
 
 var constants = {
   osTargetFolder: "provisioning-profiles"
@@ -33,7 +33,7 @@ module.exports = function(context) {
     var platform = context.opts.plugin.platform;
     var platformConfig = getPlatformConfigs(platform);
     if (!platformConfig) {
-        log("🚨 Invalid platform", "error")
+        log("🚨 Invalid platform", "error");
         defer.reject();
     }
 
@@ -44,7 +44,7 @@ module.exports = function(context) {
 
     var provisioningProfilesZipFile = getZipFile(sourceFolderPath, constants.osTargetFolder);
     if (!provisioningProfilesZipFile) {
-        log("🚨 No zip file found containing provisioning profiles", "error")
+        log("🚨 No zip file found containing provisioning profiles", "error");
         defer.reject();
     }
 
@@ -55,39 +55,45 @@ module.exports = function(context) {
 
     var files = getFilesFromPath(targetPath);
     if (!files) {
-        tils.log("🚨 No directory found: ", "error")
+        log("🚨 No directory found: ", "error");
         defer.reject();
     }
 
-    var fileName = files.find(function (name) {
+    // Find all files ending with .mobileprovision
+    var fileNames = files.filter(function (name) {
         return name.endsWith('.mobileprovision');
     });
-    if (!fileName) {
-        log("🚨 No file found: ", "error")
+
+    if (!fileNames || fileNames.length === 0) {
+        log("🚨 No .mobileprovision files found", "error");
         defer.reject();
     }
 
-    var sourceFilePath = path.join(targetPath, fileName);
-    var destFolderPath = path.join(context.opts.plugin.dir, constants.osTargetFolder);
-    var destFilePath = path.join(context.opts.plugin.dir, constants.osTargetFolder, fileName);
-
     // Create the directory if it does not exist
-    fs.mkdir(destFolderPath, { recursive: false }, (error) => {
-      if (error) {
-        console.error('🚨 Error creating directory:', error);
-      } else {
-        console.log('👍 provisioning-profiles directory created successfully (or already exists)');
-      }
+    var destFolderPath = path.join(context.opts.plugin.dir, constants.osTargetFolder);
+    fs.mkdir(destFolderPath, { recursive: true }, (error) => {
+        if (error) {
+            console.error('🚨 Error creating directory:', error);
+            defer.reject();
+        } else {
+            console.log('👍 provisioning-profiles directory created successfully (or already exists)');
+        }
     });
 
-    copyFromSourceToDestPath(defer, sourceFilePath, destFilePath);
+    // Iterate over all .mobileprovision files and copy each one
+    fileNames.forEach(function (fileName) {
+        var sourceFilePath = path.join(targetPath, fileName);
+        var destFilePath = path.join(destFolderPath, fileName);
 
-    var destPath = path.join(context.opts.projectRoot, "platforms", platform, "app");
-    if (checkIfFolderExists(destPath)) {
-        var destFilePath = path.join(destPath, fileName);
         copyFromSourceToDestPath(defer, sourceFilePath, destFilePath);
-    }
-        
-    log('✅ Successfully copied provisioning profiles! ', 'success');
+
+        var destPath = path.join(context.opts.projectRoot, "platforms", platform, "app");
+        if (checkIfFolderExists(destPath)) {
+            var platformDestFilePath = path.join(destPath, fileName);
+            copyFromSourceToDestPath(defer, sourceFilePath, platformDestFilePath);
+        }
+    });
+
+    log('✅ Successfully copied all provisioning profiles! ', 'success');
     return defer.promise;
-}
+};

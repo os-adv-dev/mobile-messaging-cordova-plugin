@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');  // Ensure the 'path' module is imported
 const { exec } = require('child_process');
 const parseString = require('xml2js').parseString;
+const plist = require('plist');
 
 function getProjectName() {
     const config = fs.readFileSync('config.xml').toString();
@@ -26,10 +27,40 @@ function waitForFile(filePath, interval = 1000) {
     });
 }
 
+function getProvisioningProfileType(provisioningProfilePath) {
+    const profileContent = fs.readFileSync(provisioningProfilePath, 'utf8');
+
+    // Extract the embedded plist
+    const plistStart = profileContent.indexOf('<?xml');
+    const plistEnd = profileContent.indexOf('</plist>') + '</plist>'.length;
+    const plistContent = profileContent.substring(plistStart, plistEnd);
+
+    const parsedPlist = plist.parse(plistContent);
+
+    // Determine profile type
+    const entitlements = parsedPlist.Entitlements || {};
+    const provisionedDevices = parsedPlist.ProvisionedDevices;
+
+    if (provisionedDevices && entitlements['aps-environment'] === 'development') {
+        return 'Development';
+    } else if (provisionedDevices) {
+        return 'AdHoc';
+    } else {
+        return 'Distribution';
+    }
+}
+
 module.exports = function(context) {
     const projectRoot = context.opts.projectRoot;
     const completionFilePath = path.join(projectRoot, 'target_addition_complete');
     const jsonFilePath = path.join(projectRoot, 'provisioning_info.json');
+
+    let codeSignIdentity = 'iPhone Developer';
+    if (context.cmdLine.toLowerCase().indexOf('release') >= 0) {
+        codeSignIdentity = 'iPhone Distribution';
+    }
+
+    console.log(`Setting CODE_SIGN_IDENTITY to: ${codeSignIdentity}`);
     
     return waitForFile(completionFilePath).then(() => {
         const projectName = getProjectName();
@@ -71,6 +102,9 @@ begin
   # The development team ID
   development_team = '${teamID}'
 
+  # Code signing identity
+  code_sign_identity = '${codeSignIdentity}'
+
   puts "Opening project: #{project_path}"
   project = Xcodeproj::Project.open(project_path)
   puts "Project opened successfully"
@@ -93,7 +127,7 @@ begin
     puts "Updating build settings for configuration: #{config.name}"
     config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = provisioning_profile_name
     config.build_settings['PROVISIONING_PROFILE'] = provisioning_profile_uuid
-    config.build_settings['CODE_SIGN_IDENTITY'] = 'iPhone Developer'
+    config.build_settings['CODE_SIGN_IDENTITY'] = code_sign_identity
     config.build_settings['DEVELOPMENT_TEAM'] = development_team
     config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
   end

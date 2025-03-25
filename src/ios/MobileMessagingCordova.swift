@@ -1,17 +1,16 @@
-
 import Foundation
 import UIKit
 import MobileMessaging
 import Dispatch
 
 class MMConfiguration {
+    static let cordovaConfigKey = "com.mobile-messaging.corodovaPluginConfiguration"
     struct Keys {
         static let privacySettings = "privacySettings"
         static let userDataPersistingDisabled = "userDataPersistingDisabled"
         static let carrierInfoSendingDisabled = "carrierInfoSendingDisabled"
         static let systemInfoSendingDisabled = "systemInfoSendingDisabled"
         static let applicationCodePersistingDisabled = "applicationCodePersistingDisabled"
-        static let geofencingEnabled = "geofencingEnabled"
         static let inAppChatEnabled = "inAppChatEnabled"
         static let fullFeaturedInAppsEnabled = "fullFeaturedInAppsEnabled"
         static let applicationCode = "applicationCode"
@@ -28,8 +27,8 @@ class MMConfiguration {
         static let unregisteringForRemoteNotificationsDisabled = "unregisteringForRemoteNotificationsDisabled"
     }
 
-    let appCode: String
-    let geofencingEnabled: Bool
+    static let ignoreKeysWhenComparing: [String] = [Keys.applicationCode, Keys.cordovaPluginVersion]
+
     let inAppChatEnabled: Bool
     let fullFeaturedInAppsEnabled: Bool
     let messageStorageEnabled: Bool
@@ -46,14 +45,11 @@ class MMConfiguration {
     let unregisteringForRemoteNotificationsDisabled: Bool
 
     init?(rawConfig: [String: AnyObject]) {
-        guard let appCode = rawConfig[MMConfiguration.Keys.applicationCode] as? String,
-            let ios = rawConfig["ios"] as? [String: AnyObject] else
+        guard let ios = rawConfig["ios"] as? [String: AnyObject] else
         {
             return nil
         }
 
-        self.appCode = appCode
-        self.geofencingEnabled = false
         self.inAppChatEnabled = rawConfig[MMConfiguration.Keys.inAppChatEnabled].unwrap(orDefault: false)
         self.fullFeaturedInAppsEnabled = rawConfig[MMConfiguration.Keys.fullFeaturedInAppsEnabled].unwrap(orDefault: false)
         self.forceCleanup = ios[MMConfiguration.Keys.forceCleanup].unwrap(orDefault: false)
@@ -102,6 +98,25 @@ class MMConfiguration {
         } else {
             self.webViewSettings = nil
         }
+    }
+
+    static func saveConfigToDefaults(rawConfig: [String: AnyObject]) {
+        UserDefaults.standard.set(rawConfig, forKey: cordovaConfigKey)
+    }
+
+    static func getConfigFromDefaults() -> [String: AnyObject]? {
+        return UserDefaults.standard.object(forKey: cordovaConfigKey) as? [String: AnyObject]
+    }
+
+    static func didConfigurationChange(userConfigDict: [String: AnyObject]) -> Bool {
+        var userConfigDict = userConfigDict
+        if var cachedConfigDict = getConfigFromDefaults() {
+            userConfigDict.remove(keys: ignoreKeysWhenComparing)
+            cachedConfigDict.remove(keys: ignoreKeysWhenComparing)
+
+            return (userConfigDict as NSDictionary) != (cachedConfigDict as NSDictionary)
+        }
+        return false
     }
 }
 
@@ -252,44 +267,53 @@ fileprivate class MobileMessagingEventsManager {
     private var eventsManager: MobileMessagingEventsManager?
     fileprivate var isStarted: Bool = false
 
-    private struct Constants {
-        static let cordovaConfigKey = "com.mobile-messaging.corodovaPluginConfiguration"
-    }
-
     override func pluginInitialize() {
         super.pluginInitialize()
         self.messageStorageAdapter = MessageStorageAdapter(plugin: self)
         MobileMessagingPluginApplicationDelegate.install()
+        // START OS-KEEP-CODE
+        // OutSystems code. Make sure to leave this here to allow notifications in notification center with app in foreground!
+        MobileMessaging.messageHandlingDelegate = CustomMessageHandlingDelegate()
+        // END OS-KEEP-CODE
         self.eventsManager = MobileMessagingEventsManager(plugin: self)
         performEarlyStartIfPossible()
     }
 
-    @objc(init:) func start(command: CDVInvokedUrlCommand) {
-        guard let userConfigDict = command.arguments[0] as? [String: AnyObject], let userConfiguration = MMConfiguration(rawConfig: userConfigDict) else
+    @objc(init:)
+    func start(command: CDVInvokedUrlCommand) { 
+        guard var userConfigDict = command.arguments[0] as? [String: AnyObject], 
+            let applicationCode = userConfigDict.removeValue(forKey: MMConfiguration.Keys.applicationCode) as? String,
+            let userConfiguration = MMConfiguration(rawConfig: userConfigDict) else
         {
             let errorResult = createErrorPluginResult(description: "Can't parse configuration")
             self.commandDelegate?.send(errorResult, callbackId: command.callbackId)
             return
         }
 
-        if let cachedConfigDict = UserDefaults.standard.object(forKey: MobileMessagingCordova.Constants.cordovaConfigKey) as? [String: AnyObject], (userConfigDict as NSDictionary) != (cachedConfigDict as NSDictionary)
-        {
-            // this `start(:)` is called from JS, it happens later after `pluginInitialize` called, here we may have most relevant configuration for the plugin. In case the configuration has changes we restart the MobileMessaging library (stop-start)
-            stop()
-            start(configuration: userConfiguration)
-        } else if UserDefaults.standard.object(forKey: MobileMessagingCordova.Constants.cordovaConfigKey) == nil {
-            // this `start(:)` should be called when there is no cached configuration and library was not started from `pluginInitialize`
-            start(configuration: userConfiguration)
+        let successCallback: () -> Void = { [weak self] in
+            MMConfiguration.saveConfigToDefaults(rawConfig: userConfigDict)
+            // this procedure guarantees delivery for the library events in cases when JavaScript environment set itself up later than real native events happen.
+            self?.eventsManager?.start()
+            self?.isStarted = true
+            self?.commandDelegate?.sendSuccess(for: command)
         }
 
-        // always store the configuration provided by the user
-        UserDefaults.standard.set(userConfigDict, forKey: MobileMessagingCordova.Constants.cordovaConfigKey)
+        let cachedConfigDict = MMConfiguration.getConfigFromDefaults()
+        let shouldRestart = needsRestart(userConfigDict: userConfigDict, applicationCode: applicationCode)
+        let shouldStart = cachedConfigDict == nil || (userConfiguration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled] as? Bool ?? false)
 
-        // this procedure guarantees delivery for the library events in cases when JavaScript environment set itself up later than real native events happen.
-        eventsManager?.start()
-
-        isStarted = true
-        commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        if shouldRestart
+        {
+            // this `start(:)` is called from JS, it happens later after `pluginInitialize` called, here we may have most relevant configuration for the plugin. In case the configuration has changes we restart the MobileMessaging library (stop-start)
+            stop {
+                self.start(configuration: userConfiguration, applicationCode: applicationCode, onSuccess: successCallback)
+            }
+        } else if shouldStart {
+            // this `start(:)` should be called when there is no cached configuration and library was not started from `pluginInitialize`
+            start(configuration: userConfiguration, applicationCode: applicationCode, onSuccess: successCallback)
+        } else {
+            successCallback()
+        }
     }
 
     func registerReceiver(_ command: CDVInvokedUrlCommand) {
@@ -440,7 +464,8 @@ fileprivate class MobileMessagingEventsManager {
         }
         let uaDict = context["userAttributes"] as? [String: Any]
         let ua = uaDict == nil ? nil : MMUserAttributes(dictRepresentation: uaDict!)
-        MobileMessaging.personalize(withUserIdentity: ui, userAttributes: ua) { (error) in
+        let forceDepersonalize = context["forceDepersonalize"] as? Bool ?? false
+        MobileMessaging.personalize(forceDepersonalize: forceDepersonalize, userIdentity: ui, userAttributes: ua) { (error) in
             if let error = error {
                 self.commandDelegate?.send(error: error, for: command)
             } else {
@@ -647,66 +672,97 @@ fileprivate class MobileMessagingEventsManager {
     //MARK: Utils
 
     private func performEarlyStartIfPossible() {
-        if let configDict = UserDefaults.standard.object(forKey: MobileMessagingCordova.Constants.cordovaConfigKey) as? [String: AnyObject],
-            let configuration = MMConfiguration(rawConfig: configDict),
-            !isStarted
+        if let configDict = MMConfiguration.getConfigFromDefaults(), let configuration = MMConfiguration(rawConfig: configDict),
+        !(configuration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled] as? Bool ?? false),
+        !isStarted
         {
-            start(configuration: configuration)
+            start(configuration: configuration, applicationCode: nil)
         }
     }
 
-    private func start(configuration: MMConfiguration) {
+    private func start(configuration: MMConfiguration, applicationCode: String?, onSuccess: (() -> Void)? = nil) {
+
+        setupMobileMessagingStaticParameters(configuration: configuration)
+
+        var mobileMessaging: MobileMessaging?
+        if let appCode = applicationCode {
+            mobileMessaging = MobileMessaging.withApplicationCode(appCode, notificationType: configuration.notificationType, forceCleanup: configuration.forceCleanup)
+        } else {
+            mobileMessaging = MobileMessaging.withSavedApplicationCode(notificationType: configuration.notificationType)
+        }
+
+        guard let mobileMessaging = mobileMessaging else {
+            MMLogDebug("Failed to initialize MobileMessaging instance, SDK can't start.")
+            return
+        }
+
+        setupConfiguration(mobileMessaging: mobileMessaging, configuration: configuration)
+        mobileMessaging.start({
+            onSuccess?()
+        })
+    }
+
+    private func stop(completion: @escaping () -> Void) {
+        MobileMessaging.stop(false) { [weak self] in
+            self?.eventsManager?.stop()
+            self?.isStarted = false
+            completion()
+        }
+    }
+
+    private func needsRestart(userConfigDict: [String: AnyObject], applicationCode: String) -> Bool {
+        let configDictChanged = MMConfiguration.didConfigurationChange(userConfigDict: userConfigDict)
+        let applicationCodeChanged = MobileMessaging.didApplicationCodeChange(applicationCode: applicationCode)
+        return configDictChanged || applicationCodeChanged
+    }
+
+    private func setupMobileMessagingStaticParameters(configuration: MMConfiguration) {
         MobileMessaging.privacySettings.applicationCodePersistingDisabled = configuration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.systemInfoSendingDisabled = configuration.privacySettings[MMConfiguration.Keys.systemInfoSendingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.carrierInfoSendingDisabled = configuration.privacySettings[MMConfiguration.Keys.carrierInfoSendingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.userDataPersistingDisabled = configuration.privacySettings[MMConfiguration.Keys.userDataPersistingDisabled].unwrap(orDefault: false)
-
-        var mobileMessaging = MobileMessaging.withApplicationCode(configuration.appCode, notificationType: configuration.notificationType, forceCleanup: configuration.forceCleanup)
-
-        if configuration.inAppChatEnabled {
-            mobileMessaging = mobileMessaging?.withInAppChat()
-        }
-
-        if configuration.fullFeaturedInAppsEnabled {
-            mobileMessaging = mobileMessaging?.withFullFeaturedInApps()
-        }
-
-        if configuration.registeringForRemoteNotificationsDisabled {
-            mobileMessaging = mobileMessaging?.withoutRegisteringForRemoteNotifications()
-        }
-
-        if configuration.overridingNotificationCenterDelegateDisabled {
-            mobileMessaging = mobileMessaging?.withoutOverridingNotificationCenterDelegate()
-        }
-
-        if configuration.unregisteringForRemoteNotificationsDisabled {
-            mobileMessaging = mobileMessaging?.withoutUnregisteringForRemoteNotifications()
-        }
-
-        if let storageAdapter = messageStorageAdapter, configuration.messageStorageEnabled {
-            mobileMessaging = mobileMessaging?.withMessageStorage(storageAdapter)
-        } else if configuration.defaultMessageStorage {
-            mobileMessaging = mobileMessaging?.withDefaultMessageStorage()
-        }
-        if let categories = configuration.categories {
-            mobileMessaging = mobileMessaging?.withInteractiveNotificationCategories(Set(categories))
-        }
-
         MobileMessaging.userAgent.pluginVersion = "cordova \(configuration.cordovaPluginVersion)"
         if (configuration.logging) {
             MobileMessaging.logger = MMDefaultLogger()
         }
-
-        if let webViewSettings = configuration.webViewSettings {
-            mobileMessaging?.webViewSettings.configureWith(rawConfig: webViewSettings)
-        }
-        mobileMessaging?.start()
     }
 
-    private func stop() {
-        MobileMessaging.stop()
-        eventsManager?.stop()
-        isStarted = false
+    private func setupConfiguration(mobileMessaging: MobileMessaging, configuration: MMConfiguration) {
+        var mobileMessaging = mobileMessaging
+        if configuration.inAppChatEnabled {
+            mobileMessaging = mobileMessaging.withInAppChat()
+        }
+
+        if configuration.fullFeaturedInAppsEnabled {
+            mobileMessaging = mobileMessaging.withFullFeaturedInApps()
+        }
+
+        if configuration.registeringForRemoteNotificationsDisabled {
+            mobileMessaging = mobileMessaging.withoutRegisteringForRemoteNotifications()
+        }
+
+        if configuration.overridingNotificationCenterDelegateDisabled {
+            mobileMessaging = mobileMessaging.withoutOverridingNotificationCenterDelegate()
+        }
+
+        if configuration.unregisteringForRemoteNotificationsDisabled {
+            mobileMessaging = mobileMessaging.withoutUnregisteringForRemoteNotifications()
+        }
+
+        if let storageAdapter = messageStorageAdapter, configuration.messageStorageEnabled {
+            mobileMessaging = mobileMessaging.withMessageStorage(storageAdapter)
+        } else if configuration.defaultMessageStorage {
+            mobileMessaging = mobileMessaging.withDefaultMessageStorage()
+        }
+
+        if let categories = configuration.categories {
+            mobileMessaging = mobileMessaging.withInteractiveNotificationCategories(Set(categories))
+        }
+
+        if let webViewSettings = configuration.webViewSettings {
+            mobileMessaging.webViewSettings.configureWith(rawConfig: webViewSettings)
+        }
+
     }
 }
 
@@ -724,6 +780,7 @@ extension MM_MTMessage {
     override func dictionary() -> [String: Any] {
         var result = [String: Any]()
         result["messageId"] = messageId
+        result["title"] = title
         result["body"] = text
         result["sound"] = sound
         result["silent"] = isSilent
@@ -774,24 +831,6 @@ extension MMBaseMessage {
             result["silent"] = silent
         }
 
-        return result
-    }
-}
-
-extension MMRegion {
-    func dictionary() -> [String: Any] {
-        var areaCenter = [String: Any]()
-        areaCenter["lat"] = center.latitude
-        areaCenter["lon"] = center.longitude
-
-        var area = [String: Any]()
-        area["id"] = identifier
-        area["center"] = areaCenter
-        area["radius"] = radius
-        area["title"] = title
-
-        var result = [String: Any]()
-        result["area"] = area
         return result
     }
 }
@@ -916,12 +955,18 @@ extension Optional {
     }
 }
 
+extension Dictionary {
+    mutating func remove(keys: [Key]) {
+        keys.forEach { self.removeValue(forKey: $0)}
+    }
+}
+
 private func createErrorPluginResult(error: NSError) -> CDVPluginResult {
     return createErrorPluginResult(description: error.description, errorCode: error.code, domain: error.domain)
 }
 
 private func createErrorPluginResult(description: String, errorCode: Int? = nil, domain: String? = "com.infobip.mobile-messaging.cordova-plugin.ios-wrapper") -> CDVPluginResult {
-    var error: [AnyHashable: Any] = ["descritpion": description]
+    var error: [AnyHashable: Any] = ["description": description]
     if let errorCode = errorCode {
         error["code"] = errorCode
     }

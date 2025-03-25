@@ -3,7 +3,7 @@
 var fs = require('fs');
 var path = require('path');
 var Q = require('q');
-var {log} = require('./utils')
+var {log} = require('../utils')
 
 
 console.log('\x1b[40m');
@@ -115,6 +115,14 @@ module.exports = function(context) {
       fs.mkdirSync(targetFolder);
     }else{
       console.log(`Dir ${targetFolder} already exists`);
+    }
+
+    // List files in the destination folder before copying
+    console.log('👉 Listing contents of the target folder before copying:');
+    if (fs.existsSync(targetFolder)) {
+      listDirectoryContents(targetFolder);
+    } else {
+      console.log('🚨 Target folder does not exist.');
     }
 
     // Copy provisioning profiles
