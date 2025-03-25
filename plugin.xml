@@ -33,8 +33,8 @@
 
 		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 
-		<hook type="before_plugin_install" src="scripts/save_variables_json.js" />
-		<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
+		<hook type="before_plugin_install" src="scripts/android/save_variables_json.js" />
+		<hook type="after_prepare" src="scripts/android/android_fix_google_app_id.js"/>
 		<!-- <hook type="after_compile" src="scripts/runAfterCompileHuawei.js"/> -->
 		<!--<hook type="after_build" src="scripts/runAfterBuildHuaweiAndroid.js"/>
 		<hook type="before_prepare" src="scripts/before_prepare_copy_keystore.js"/> -->
