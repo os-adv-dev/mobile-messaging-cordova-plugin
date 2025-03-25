@@ -271,6 +271,10 @@ fileprivate class MobileMessagingEventsManager {
         super.pluginInitialize()
         self.messageStorageAdapter = MessageStorageAdapter(plugin: self)
         MobileMessagingPluginApplicationDelegate.install()
+        // START OS-KEEP-CODE
+        // OutSystems code. Make sure to leave this here to allow notifications in notification center with app in foreground!
+        MobileMessaging.messageHandlingDelegate = CustomMessageHandlingDelegate()
+        // END OS-KEEP-CODE
         self.eventsManager = MobileMessagingEventsManager(plugin: self)
         performEarlyStartIfPossible()
     }
