@@ -13,7 +13,7 @@
 	<!--
 	<dependency id="cordova-plugin-add-swift-support"/>
 	-->
-	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS2"/>
+	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/os-adv-dev/cordova-plugin-add-swift-support#2.0.3-OS-improved-buildsettings"/>
 	<dependency id="cordova-custom-config"/>
 
 	<js-module name="mobileMessaging" src="www/MobileMessagingCordova.js">
