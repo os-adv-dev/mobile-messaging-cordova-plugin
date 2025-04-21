@@ -46,7 +46,7 @@
 	<!-- before_plugin_add -->
 	
 	<!--<hook type="before_plugin_install" src="scripts/ios/edit-podfile-js.js"/>-->
-	<hook type="before_prepare" src="scripts/ios/podfile-add-notification-extension-target.js"/>
+	<hook type="after_prepare" src="scripts/ios/podfile-add-notification-extension-target.js"/>
 
 	<hook type="before_prepare" src="scripts/ios/list_pp_folder.js"/>
 	<hook type="after_plugin_install" src="scripts/ios/check_config_plist.js"/>
