@@ -13,7 +13,7 @@
 	<!--
 	<dependency id="cordova-plugin-add-swift-support"/>
 	-->
-	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/os-adv-dev/cordova-plugin-add-swift-support#2.0.3-OS-improved-buildsettings"/>
+	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS1"/>
 	<dependency id="cordova-custom-config"/>
 
 	<js-module name="mobileMessaging" src="www/MobileMessagingCordova.js">
@@ -37,17 +37,18 @@
 	<hook type="before_plugin_install" src="scripts/ios/copyAndUnzipProvisioningProfiles.js"/> 
 
 	<!-- Creates second target and sets it up -->
+	<hook type="before_build" src="scripts/ios/edit-podfile-js.js"/>
 	<hook type="before_build" src="scripts/ios/integrate_notification_extension.js"/>
 	<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
 	<hook type="before_prepare" src="scripts/ios/editXcodeProj.js" />
 
-	<hook type="before_build" src="scripts/ios/pod-install.js" />
+	<!--<hook type="before_build" src="scripts/ios/pod-install.js" />-->
 	<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js"/>
 
 	<!-- before_plugin_add -->
 	
 	<!--<hook type="before_plugin_install" src="scripts/ios/edit-podfile-js.js"/>-->
-	<hook type="after_prepare" src="scripts/ios/podfile-add-notification-extension-target.js"/>
+	<!--<hook type="after_prepare" src="scripts/ios/podfile-add-notification-extension-target.js"/>-->
 
 	<hook type="before_prepare" src="scripts/ios/list_pp_folder.js"/>
 	<hook type="after_plugin_install" src="scripts/ios/check_config_plist.js"/>
