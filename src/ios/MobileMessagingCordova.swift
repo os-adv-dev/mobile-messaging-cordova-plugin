@@ -324,6 +324,18 @@ fileprivate class MobileMessagingEventsManager {
         commandDelegate?.send(result, callbackId: command.callbackId)
     }
 
+    func checkPermissions(_ command: CDVInvokedUrlCommand) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                if settings.authorizationStatus == .authorized {
+                    self.commandDelegate?.send(message: "Notifications are enabled", for: command)
+                } else {
+                    self.commandDelegate?.send(errorText: "Notifications are not enabled", for: command)
+                }
+            }
+        }
+    }
+
     func saveUser(_ command: CDVInvokedUrlCommand) {
         guard let userDataDictionary = command.arguments[0] as? [String: Any], let user = MMUser(dictRepresentation: userDataDictionary) else
         {
