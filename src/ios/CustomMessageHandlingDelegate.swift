@@ -21,13 +21,13 @@ class CustomMessageHandlingDelegate: NSObject, MMMessageHandlingDelegate {
         }
         
         //check if notification should be displayed as a banner
-        if message?.inAppStyle == .Banner {
+        //if message?.inAppStyle == .Banner { as asked by infobip to allow showing push notifications with app in foreground
             if #available(iOS 14.0, *) {
                 presentationOptions.insert([.banner, .list])
             } else {
                 presentationOptions.insert(.alert)
             }
-        }
+        //}
 
         //add default options if needed
         presentationOptions.insert([.badge, .sound])
