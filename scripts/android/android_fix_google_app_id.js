@@ -22,6 +22,10 @@ module.exports = function(ctx) {
     // Get variables from huawei_info.json file
     const projectRoot = ctx.opts.projectRoot;
     const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    if (fs.existsSync(jsonFilePath) === false) {
+        console.error(`❌ -- Huawei info JSON file not found at ${jsonFilePath}`);
+        return;
+    }
     console.log("✅ -- Reading Huawei info from file: " + jsonFilePath);
 
     const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
@@ -42,6 +46,10 @@ module.exports = function(ctx) {
 
         const projectRoot = ctx.opts.projectRoot;
         const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+        if (fs.existsSync(jsonFilePath) === false) {
+            console.error(`❌ -- Huawei info JSON file not found at ${jsonFilePath}`);
+            return;
+        }
         console.log(" ✅ -- get file huawei info to build: "+jsonFilePath);
 
         // Check if the Huawei JSON file exists

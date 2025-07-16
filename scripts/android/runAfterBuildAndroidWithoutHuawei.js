@@ -13,6 +13,10 @@ module.exports = function(context) {
     // Get variables from huawei_info.json file
     const projectRoot = context.opts.projectRoot;
     const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    if (fs.existsSync(jsonFilePath) === false) {
+        console.error(`❌ -- Huawei info JSON file not found at ${jsonFilePath}`);
+        return;
+    }
     console.log("✅ -- Reading Huawei info from file: " + jsonFilePath);
 
     const huaweiInfo = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
@@ -221,6 +225,10 @@ function runUploadBinaryScript(context) {
 
     const projectRoot = context.opts.projectRoot;
     const jsonFilePath = path.join(projectRoot, 'huawei_info.json');
+    if (fs.existsSync(jsonFilePath) === false) {
+        console.error(`❌ -- Huawei info JSON file not found at ${jsonFilePath}`);
+        return;
+    }
     console.log("✅ -- Retrieved Huawei info file path: " + jsonFilePath);
 
     if (!fs.existsSync(jsonFilePath)) {
