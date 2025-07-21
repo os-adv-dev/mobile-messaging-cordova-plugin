@@ -28,14 +28,14 @@ describe('Initialization', function() {
 	});
 
 	it('should fail if no application code', function(done) {
-		MobileMessaging.init({}, function(error) {
+		MobileMessaging.init({}, function() {}, function(error) {
 			expect(error).toBe('No application code provided');
 			done();
 		});
 	});
 
 	it('should provide configuration to cordova.exec()', function() {
-		MobileMessaging.init({applicationCode: '12345'}, function() {});
+		MobileMessaging.init({applicationCode: '12345', userDataJwt: 'jwt'}, function() {});
 		expect(cordova.exec).toHaveBeenCalledWith(
 			jasmine.any(Function),
 			jasmine.any(Function),
@@ -49,6 +49,7 @@ describe('Initialization', function() {
 			'MobileMessagingCordova',
 			'init',
 			[{
+				userDataJwt: 'jwt',
 				applicationCode: '12345',
 				cordovaPluginVersion: '1.2.3-test'
 			}]);
@@ -73,7 +74,7 @@ describe('Initialization with message storage', function() {
 			}
 		};
 
-		MobileMessaging.init(config, function(error) {
+		MobileMessaging.init(config, function() {}, function(error) {
 			expect(error).toBe('Missing messageStorage.start function definition');
 			done();
 		});
@@ -90,7 +91,7 @@ describe('Initialization with message storage', function() {
 			}
 		};
 
-		MobileMessaging.init(config, function(error) {
+		MobileMessaging.init(config, function() {}, function(error) {
 			expect(error).toBe('Missing messageStorage.stop function definition');
 			done();
 		});
@@ -107,7 +108,7 @@ describe('Initialization with message storage', function() {
 			}
 		};
 
-		MobileMessaging.init(config, function(error) {
+		MobileMessaging.init(config, function() {}, function(error) {
 			expect(error).toBe('Missing messageStorage.save function definition');
 			done();
 		});
@@ -124,7 +125,7 @@ describe('Initialization with message storage', function() {
 			}
 		};
 
-		MobileMessaging.init(config, function(error) {
+		MobileMessaging.init(config, function() {}, function(error) {
 			expect(error).toBe('Missing messageStorage.find function definition');
 			done();
 		});
@@ -141,7 +142,7 @@ describe('Initialization with message storage', function() {
 			}
 		};
 
-		MobileMessaging.init(config, function(error) {
+		MobileMessaging.init(config, function() {}, function(error) {
 			expect(error).toBe('Missing messageStorage.findAll function definition');
 			done();
 		});
@@ -447,6 +448,17 @@ describe('Base methods', function() {
 			'submitEventImmediately',
 			[{definitionId: "eventDefinitionId1"}]);
 	});
+
+	it('should set user data JWT', function() {
+		MobileMessaging.setUserDataJwt('jwt', function(){});
+
+		expect(cordova.exec).toHaveBeenCalledWith(
+			jasmine.any(Function),
+			jasmine.any(Function),
+			'MobileMessagingCordova',
+			'setUserDataJwt',
+			['jwt']);
+	})
 });
 
 describe('defaultMessageStorage methods', function() {
@@ -613,3 +625,4 @@ describe('inAppChat methods', function() {
         		['{"test_attribute_string":"test_attribute_value"}',true]);
         });
 });
+

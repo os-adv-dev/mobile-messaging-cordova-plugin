@@ -67,8 +67,6 @@
         initMobileMessaging: function() {
             MobileMessaging.init({
                     applicationCode: APP_CODE,
-                    // geofencingEnabled: true,
-                    inAppChatEnabled: false,
                     fullFeaturedInAppsEnabled: true,
                     defaultMessageStorage: true,    // use build in message storage or not
                     ios: {
@@ -76,7 +74,9 @@
                         logging: true,
                     }
                 },
-
+                function () {
+                    console.log(`Mobile Messaging SDK has started initialization process. Register for registrationUpdated event to know when it's ready to be used.`)
+                },
                 function(error) {
                     utils.log('Init error: ' + error);
                 }

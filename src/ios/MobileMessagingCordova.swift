@@ -25,6 +25,7 @@ class MMConfiguration {
         static let registeringForRemoteNotificationsDisabled = "registeringForRemoteNotificationsDisabled"
         static let overridingNotificationCenterDelegateDisabled = "overridingNotificationCenterDelegateDisabled"
         static let unregisteringForRemoteNotificationsDisabled = "unregisteringForRemoteNotificationsDisabled"
+        static let userDataJwt = "userDataJwt"
     }
 
     static let ignoreKeysWhenComparing: [String] = [Keys.applicationCode, Keys.cordovaPluginVersion]
@@ -43,6 +44,7 @@ class MMConfiguration {
     let registeringForRemoteNotificationsDisabled: Bool
     let overridingNotificationCenterDelegateDisabled: Bool
     let unregisteringForRemoteNotificationsDisabled: Bool
+    let userDataJwt: String?
 
     init?(rawConfig: [String: AnyObject]) {
         guard let ios = rawConfig["ios"] as? [String: AnyObject] else
@@ -59,6 +61,7 @@ class MMConfiguration {
         self.registeringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.registeringForRemoteNotificationsDisabled].unwrap(orDefault: false)
         self.overridingNotificationCenterDelegateDisabled = ios[MMConfiguration.Keys.overridingNotificationCenterDelegateDisabled].unwrap(orDefault: false)
         self.unregisteringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.unregisteringForRemoteNotificationsDisabled].unwrap(orDefault: false)
+        self.userDataJwt = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
 
         if let rawPrivacySettings = rawConfig[MMConfiguration.Keys.privacySettings] as? [String: Any] {
             var ps = [String: Any]()
@@ -280,8 +283,8 @@ fileprivate class MobileMessagingEventsManager {
     }
 
     @objc(init:)
-    func start(command: CDVInvokedUrlCommand) { 
-        guard var userConfigDict = command.arguments[0] as? [String: AnyObject], 
+    func start(command: CDVInvokedUrlCommand) {
+        guard var userConfigDict = command.arguments[0] as? [String: AnyObject],
             let applicationCode = userConfigDict.removeValue(forKey: MMConfiguration.Keys.applicationCode) as? String,
             let userConfiguration = MMConfiguration(rawConfig: userConfigDict) else
         {
@@ -527,6 +530,11 @@ fileprivate class MobileMessagingEventsManager {
         self.commandDelegate?.send(errorText: "Not supported", for: command)
     }
 
+    func setUserDataJwt(_ command: CDVInvokedUrlCommand) {
+        let jwtString = command.arguments.first as? String
+        MobileMessaging.jwtSupplier = VariableJwtSupplier(jwt: jwtString)
+    }
+
     //MARK: MessageStorage
     func messageStorage_register(_ command: CDVInvokedUrlCommand) {
         messageStorageAdapter?.register(command)
@@ -702,6 +710,8 @@ fileprivate class MobileMessagingEventsManager {
         } else {
             mobileMessaging = MobileMessaging.withSavedApplicationCode(notificationType: configuration.notificationType)
         }
+
+        mobileMessaging = mobileMessaging?.withJwtSupplier(VariableJwtSupplier(jwt: configuration.userDataJwt))
 
         guard let mobileMessaging = mobileMessaging else {
             MMLogDebug("Failed to initialize MobileMessaging instance, SDK can't start.")
@@ -974,10 +984,10 @@ extension Dictionary {
 }
 
 private func createErrorPluginResult(error: NSError) -> CDVPluginResult {
-    return createErrorPluginResult(description: error.description, errorCode: error.code, domain: error.domain)
+    return createErrorPluginResult(description: error.localizedDescription, errorCode: error.mm_code ?? error.code, domain: error.domain)
 }
 
-private func createErrorPluginResult(description: String, errorCode: Int? = nil, domain: String? = "com.infobip.mobile-messaging.cordova-plugin.ios-wrapper") -> CDVPluginResult {
+private func createErrorPluginResult(description: String, errorCode: Any? = nil, domain: String? = "com.infobip.mobile-messaging.cordova-plugin.ios-wrapper") -> CDVPluginResult {
     var error: [AnyHashable: Any] = ["description": description]
     if let errorCode = errorCode {
         error["code"] = errorCode
@@ -1015,18 +1025,38 @@ fileprivate extension CDVCommandDelegate {
 }
 
 extension UIApplication {
-    class func topViewController(controller: UIViewController? = UIApplication.shared.keyWindow?.rootViewController) -> UIViewController? {
-        if let navigationController = controller as? UINavigationController {
+    public var firstKeyWindow: UIWindow? {
+        return connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first(where: { $0.activationState == .foregroundActive })?
+            .windows
+            .first(where: { $0.isKeyWindow })
+    }
+
+    class func topViewController(controller: UIViewController? = nil) -> UIViewController? {
+        let rootController = controller ?? UIApplication.shared.firstKeyWindow?.rootViewController
+
+        if let navigationController = rootController as? UINavigationController {
             return topViewController(controller: navigationController.visibleViewController)
         }
-        if let tabController = controller as? UITabBarController {
+        if let tabController = rootController as? UITabBarController {
             if let selected = tabController.selectedViewController {
                 return topViewController(controller: selected)
             }
         }
-        if let presented = controller?.presentedViewController {
+        if let presented = rootController?.presentedViewController {
             return topViewController(controller: presented)
         }
-        return controller
+        return rootController
+    }
+}
+
+class VariableJwtSupplier: NSObject, MMJwtSupplier {
+    let jwt: String?
+    init(jwt: String?) {
+        self.jwt = jwt
+    }
+    func getJwt() -> String? {
+        return jwt
     }
 }

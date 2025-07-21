@@ -49,6 +49,7 @@ var MobileMessagingCordova = function () {
  *      fullFeaturedInAppsEnabled: true,
  *      messageStorage: '<Message storage save callback>',
  *      defaultMessageStorage: true,
+ *      userDataJwt: '<JWT token for authorization of user data related operations>',
  *      ios: {
  *          notificationTypes: ['alert', 'sound', 'badge'],
  *          forceCleanup: <Boolean>,
@@ -82,12 +83,15 @@ var MobileMessagingCordova = function () {
  *          }
  *      ]
  *  }
+ *  @param {Function} callback. Called after successful start of Mobile Messaging SDK initialization. Notice: no Mobile Messaging SDK
+ *  methods can be called in this callback as it is not yet initialized. To know when Mobile Messaging SDK is fully initialized, subscribe
+ *  to "registrationUpdated" event.
  * @param {Function} onInitError. Error callback
  */
-MobileMessagingCordova.prototype.init = function (config, onSuccess, onInitError) {
+MobileMessagingCordova.prototype.init = function (config, callback, onInitError) {
     var messageStorage = config.messageStorage;
-    var _onInitErrorHandler = onInitError || function () {
-    };
+    var _onInitErrorHandler = onInitError || function () {};
+    var _successCallback = callback || function () {};
 
     this.configuration = config;
 
@@ -135,7 +139,7 @@ MobileMessagingCordova.prototype.init = function (config, onSuccess, onInitError
 
     cordova.exec(execEventHandlerIfExists, function () {
     }, 'MobileMessagingCordova', 'registerReceiver', [supportedEvents]);
-    cordova.exec(onSuccess, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
+    cordova.exec(_successCallback, _onInitErrorHandler, 'MobileMessagingCordova', 'init', [config]);
 };
 
 /**
@@ -610,6 +614,18 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
 }
 
 /**
+ * Updates JWT used for user data fetching and personalization.
+ * @name setJwt
+ * @param {String} jwt - JWT token in a predefined format
+ * @param {Function} errorCallback will be called on error
+ */
+MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, errorCallback) {
+    cordova.exec(function () {
+    }, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
+}
+
+// START OS-KEEP-CODE
+/**
  * Check permissions on user device
  *
  * @name checkPermissions
@@ -619,6 +635,7 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
 MobileMessagingCordova.prototype.checkPermissions = function (callback, errorCallback) {
     cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'checkPermissions', [])
 };
+// END OS-KEEP-CODE
 
 MobileMessaging = new MobileMessagingCordova();
 module.exports = MobileMessaging;
