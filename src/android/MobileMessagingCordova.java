@@ -3,6 +3,8 @@ package org.apache.cordova.plugin;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,6 +18,8 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -81,6 +85,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 public class MobileMessagingCordova extends CordovaPlugin {
     private static final String TAG = "MobileMessagingCordova";
@@ -500,7 +505,6 @@ public class MobileMessagingCordova extends CordovaPlugin {
             callbackContext.error("Notifications are disabled");
         }
     }
-    // END OS-KEEP-CODE
 
     @RequiresApi(Build.VERSION_CODES.O)
     private boolean areChannelsEnabled(NotificationManagerCompat notificationManagerCompat) {
@@ -514,6 +518,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         }
         return true;
     }
+    // END OS-KEEP-CODE
 
     private void init(JSONArray args, final CallbackContext callbackContext) throws JSONException {
         final Configuration configuration = resolveConfiguration(args);
