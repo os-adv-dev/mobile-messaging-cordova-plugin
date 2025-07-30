@@ -619,9 +619,8 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
  * @param {String} jwt - JWT token in a predefined format
  * @param {Function} errorCallback will be called on error
  */
-MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, errorCallback) {
-    cordova.exec(function () {
-    }, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
+MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, callback, errorCallback) {
+    cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
 }
 
 // START OS-KEEP-CODE
