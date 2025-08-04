@@ -34,7 +34,7 @@ module.exports = function(context) {
                 console.log("✅ -- Plugin HUAWEI removed successfully.");
 
                 // Add the alternative plugin
-                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#7.2.0-os-android --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#7.2.1-os-android --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
                 console.log("🔄 -- Adding plugin from specific branch...");
                 return execShellCommand(addPluginCommand);
             })
@@ -58,7 +58,7 @@ module.exports = function(context) {
             .then(() => {
                 console.log("✅ -- Plugin HUAWEI removed successfully.");
                 // Add again the plugin using another branch
-                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#7.2.0-os-android --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
+                const addPluginCommand = `cordova plugin add https://github.com/os-adv-dev/mobile-messaging-cordova-plugin.git#7.2.1-os-android --variable CREDENTIALS=${credentials} --variable WEBSERVICEURL=${webServiceUrl} --variable HUAWEI_SENDER_ID=${huaweiSenderId} --verbose`;
                 console.log("🔄 -- Adding plugin from specific branch...");
                 return execShellCommand(addPluginCommand);
             })
