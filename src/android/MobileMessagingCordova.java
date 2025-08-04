@@ -86,7 +86,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 public class MobileMessagingCordova extends CordovaPlugin {
     private static final String TAG = "MobileMessagingCordova";
 
@@ -239,7 +238,8 @@ public class MobileMessagingCordova extends CordovaPlugin {
             String notificationSound;
             boolean multipleNotifications;
             String notificationAccentColor;
-//            FirebaseOptions firebaseOptions;
+            boolean withBannerForegroundNotificationsEnabled;
+//            FirebaseOptions firebaseOptions;        
         }
 
         class PrivacySettings {
@@ -583,6 +583,9 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 builder.withCustomNotificationChannel(configuration.android.notificationChannelId,
                         configuration.android.notificationChannelName,
                         configuration.android.notificationSound);
+            }
+            if (configuration.android.withBannerForegroundNotificationsEnabled) {
+                builder.withBannerForegroundNotifications();
             }
 
             builder.withDisplayNotification(notificationBuilder.build());
