@@ -43,13 +43,14 @@ var MobileMessagingCordova = function () {
  * @name init
  * @param {JSON} config. Configuration for Mobile Messaging
  * Configuration format:
- *  {
+  *  {
  *      applicationCode: '<The application code of your Application from Push Portal website>',
  *      inAppChatEnabled: true,
  *      fullFeaturedInAppsEnabled: true,
  *      messageStorage: '<Message storage save callback>',
  *      defaultMessageStorage: true,
  *      userDataJwt: '<JWT token for authorization of user data related operations>',
+ *      loggingEnabled: false,
  *      ios: {
  *          notificationTypes: ['alert', 'sound', 'badge'],
  *          forceCleanup: <Boolean>,
@@ -57,6 +58,9 @@ var MobileMessagingCordova = function () {
  *          registeringForRemoteNotificationsDisabled: <Boolean>,
  *          overridingNotificationCenterDelegateDisabled: <Boolean>,
  *          unregisteringForRemoteNotificationsDisabled: <Boolean>
+ *      },
+ *      android: {
+ *          withBannerForegroundNotificationsEnabled: <Boolean>
  *      },
  *      privacySettings: {
  *          applicationCodePersistingDisabled: <Boolean>,
@@ -619,8 +623,9 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
  * @param {String} jwt - JWT token in a predefined format
  * @param {Function} errorCallback will be called on error
  */
-MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, callback, errorCallback) {
-    cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
+MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, errorCallback) {
+    cordova.exec(function () {
+    }, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
 }
 
 // START OS-KEEP-CODE
