@@ -10,7 +10,6 @@ class MMConfiguration {
         static let userDataPersistingDisabled = "userDataPersistingDisabled"
         static let carrierInfoSendingDisabled = "carrierInfoSendingDisabled"
         static let systemInfoSendingDisabled = "systemInfoSendingDisabled"
-        static let applicationCodePersistingDisabled = "applicationCodePersistingDisabled"
         static let inAppChatEnabled = "inAppChatEnabled"
         static let fullFeaturedInAppsEnabled = "fullFeaturedInAppsEnabled"
         static let applicationCode = "applicationCode"
@@ -26,6 +25,7 @@ class MMConfiguration {
         static let overridingNotificationCenterDelegateDisabled = "overridingNotificationCenterDelegateDisabled"
         static let unregisteringForRemoteNotificationsDisabled = "unregisteringForRemoteNotificationsDisabled"
         static let userDataJwt = "userDataJwt"
+        static let trustedDomains = "trustedDomains"
     }
 
     static let ignoreKeysWhenComparing: [String] = [Keys.applicationCode, Keys.cordovaPluginVersion]
@@ -45,6 +45,7 @@ class MMConfiguration {
     let overridingNotificationCenterDelegateDisabled: Bool
     let unregisteringForRemoteNotificationsDisabled: Bool
     let userDataJwt: String?
+    let trustedDomains: [String]?
 
     init?(rawConfig: [String: AnyObject]) {
         guard let ios = rawConfig["ios"] as? [String: AnyObject] else
@@ -62,13 +63,13 @@ class MMConfiguration {
         self.overridingNotificationCenterDelegateDisabled = ios[MMConfiguration.Keys.overridingNotificationCenterDelegateDisabled].unwrap(orDefault: false)
         self.unregisteringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.unregisteringForRemoteNotificationsDisabled].unwrap(orDefault: false)
         self.userDataJwt = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
+        self.trustedDomains = rawConfig[MMConfiguration.Keys.trustedDomains] as? [String]
 
         if let rawPrivacySettings = rawConfig[MMConfiguration.Keys.privacySettings] as? [String: Any] {
             var ps = [String: Any]()
             ps[MMConfiguration.Keys.userDataPersistingDisabled] = rawPrivacySettings[MMConfiguration.Keys.userDataPersistingDisabled].unwrap(orDefault: false)
             ps[MMConfiguration.Keys.carrierInfoSendingDisabled] = rawPrivacySettings[MMConfiguration.Keys.carrierInfoSendingDisabled].unwrap(orDefault: false)
             ps[MMConfiguration.Keys.systemInfoSendingDisabled] = rawPrivacySettings[MMConfiguration.Keys.systemInfoSendingDisabled].unwrap(orDefault: false)
-            ps[MMConfiguration.Keys.applicationCodePersistingDisabled] = rawPrivacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled].unwrap(orDefault: false)
 
             self.privacySettings = ps
         } else {
@@ -303,7 +304,7 @@ fileprivate class MobileMessagingEventsManager {
 
         let cachedConfigDict = MMConfiguration.getConfigFromDefaults()
         let shouldRestart = needsRestart(userConfigDict: userConfigDict, applicationCode: applicationCode)
-        let shouldStart = cachedConfigDict == nil || (userConfiguration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled] as? Bool ?? false)
+        let shouldStart = cachedConfigDict == nil || MobileMessaging.getKeychainApplicationCode() == nil
 
         if shouldRestart
         {
@@ -326,7 +327,8 @@ fileprivate class MobileMessagingEventsManager {
         result?.setKeepCallbackAs(true)
         commandDelegate?.send(result, callbackId: command.callbackId)
     }
-
+    
+    // START OS-KEEP-CODE
     func checkPermissions(_ command: CDVInvokedUrlCommand) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
@@ -338,6 +340,7 @@ fileprivate class MobileMessagingEventsManager {
             }
         }
     }
+    // END OS-KEEP-CODE
 
     func saveUser(_ command: CDVInvokedUrlCommand) {
         guard let userDataDictionary = command.arguments[0] as? [String: Any], let user = MMUser(dictRepresentation: userDataDictionary) else
@@ -625,96 +628,29 @@ fileprivate class MobileMessagingEventsManager {
         }
     }
 
-    func showChat(_ command: CDVInvokedUrlCommand) {
-        var presentVCModally = false
-        if command.arguments.count > 0,
-            let presentingOptions = command.arguments[0] as? [String: Any],
-            let iosOptions = presentingOptions["ios"] as? [String: Any],
-            let shouldBePresentedModally = iosOptions["shouldBePresentedModally"] as? Bool {
-            presentVCModally = shouldBePresentedModally
-        }
-
-        let vc = presentVCModally ? MMChatViewController.makeRootNavigationViewController(): MMChatViewController.makeRootNavigationViewControllerWithCustomTransition()
-        if presentVCModally {
-            vc.modalPresentationStyle = .fullScreen
-        }
-        if let rootVc = UIApplication.topViewController() {
-            rootVc.present(vc, animated: true, completion: nil)
-        } else {
-            MMLogDebug("[InAppChat] could not define root vc to present in-app-chat")
-        }
-        self.commandDelegate.sendSuccess(for: command)
-    }
-
-    func setLanguage(_ command: CDVInvokedUrlCommand) {
-        guard let localeString = command.arguments[0] as? String else {
-            self.commandDelegate?.send(errorText: "Could not retrieve locale string from arguments", for: command)
-            return
-        }
-        MobileMessaging.inAppChat?.setLanguage(localeString)
-    }
-
-    func sendContextualData(_ command: CDVInvokedUrlCommand) {
-        guard command.arguments.count > 0,
-              let metadata = command.arguments[0] as? String,
-              let allMultiThreadStrategy = command.arguments[1] as? Bool else {
-            self.commandDelegate?.send(errorText: "Could not retrieve contextual data or multi-thread strategy flag from arguments", for: command)
-            return
-        }
-
-        if let chatVC = UIApplication.topViewController() as? MMChatViewController {
-            let mtStrategy: MMChatMultiThreadStrategy = allMultiThreadStrategy ? .ALL : .ACTIVE
-            chatVC.sendContextualData(metadata, multiThreadStrategy: mtStrategy) { error in
-                guard let error = error else {
-                    return
-                }
-                self.commandDelegate?.send(errorText: "Could not send metadata, error \(error.localizedDescription) from arguments", for: command)
-            }
-        }
-    }
-
-    func setupiOSChatSettings(_ command: CDVInvokedUrlCommand) {
-        if let chatSettings = command.arguments[0] as? [String: AnyObject] {
-            MMChatSettings.settings.configureWith(rawConfig: chatSettings)
-        }
-    }
-
-    func getMessageCounter(_ command: CDVInvokedUrlCommand) {
-        let successResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: MobileMessaging.inAppChat?.getMessageCounter ?? 0)
-        self.commandDelegate?.send(successResult, callbackId: command.callbackId)
-    }
-
-    func resetMessageCounter(_ command: CDVInvokedUrlCommand) {
-        MobileMessaging.inAppChat?.resetMessageCounter()
-        self.commandDelegate.sendSuccess(for: command)
-    }
-
     //MARK: Utils
 
     private func performEarlyStartIfPossible() {
+        let keychainAppCode = MobileMessaging.getKeychainApplicationCode()
         if let configDict = MMConfiguration.getConfigFromDefaults(), let configuration = MMConfiguration(rawConfig: configDict),
-        !(configuration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled] as? Bool ?? false),
-        !isStarted
+           !isStarted,
+           let appCode = keychainAppCode
         {
-            start(configuration: configuration, applicationCode: nil)
+            start(configuration: configuration, applicationCode: appCode)
+        } else {
+            MMLogDebug("Failed to start early. Keychain appcode \(keychainAppCode == nil ? "not set" : "set")")
         }
     }
 
-    private func start(configuration: MMConfiguration, applicationCode: String?, onSuccess: (() -> Void)? = nil) {
-
+    private func start(configuration: MMConfiguration, applicationCode: String, onSuccess: (() -> Void)? = nil) {
         setupMobileMessagingStaticParameters(configuration: configuration)
 
-        var mobileMessaging: MobileMessaging?
-        if let appCode = applicationCode {
-            mobileMessaging = MobileMessaging.withApplicationCode(appCode, notificationType: configuration.notificationType, forceCleanup: configuration.forceCleanup)
-        } else {
-            mobileMessaging = MobileMessaging.withSavedApplicationCode(notificationType: configuration.notificationType)
-        }
-
-        mobileMessaging = mobileMessaging?.withJwtSupplier(VariableJwtSupplier(jwt: configuration.userDataJwt))
-
+        let mobileMessaging = MobileMessaging
+            .withApplicationCode(applicationCode, notificationType: configuration.notificationType)?
+            .withJwtSupplier(VariableJwtSupplier(jwt: configuration.userDataJwt))
+        
         guard let mobileMessaging = mobileMessaging else {
-            MMLogDebug("Failed to initialize MobileMessaging instance, SDK can't start.")
+            MMLogError("Failed to initialize MobileMessaging instance, SDK can't start.")
             return
         }
 
@@ -739,7 +675,6 @@ fileprivate class MobileMessagingEventsManager {
     }
 
     private func setupMobileMessagingStaticParameters(configuration: MMConfiguration) {
-        MobileMessaging.privacySettings.applicationCodePersistingDisabled = configuration.privacySettings[MMConfiguration.Keys.applicationCodePersistingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.systemInfoSendingDisabled = configuration.privacySettings[MMConfiguration.Keys.systemInfoSendingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.carrierInfoSendingDisabled = configuration.privacySettings[MMConfiguration.Keys.carrierInfoSendingDisabled].unwrap(orDefault: false)
         MobileMessaging.privacySettings.userDataPersistingDisabled = configuration.privacySettings[MMConfiguration.Keys.userDataPersistingDisabled].unwrap(orDefault: false)
@@ -785,6 +720,10 @@ fileprivate class MobileMessagingEventsManager {
             mobileMessaging.webViewSettings.configureWith(rawConfig: webViewSettings)
         }
 
+        if let domains = configuration.trustedDomains, !domains.isEmpty {
+            mobileMessaging = mobileMessaging.withTrustedDomains(domains)
+        }
+
     }
 }
 
@@ -794,6 +733,8 @@ extension MMInbox {
         result["countTotal"] = countTotal
         result["countUnread"] = countUnread
         result["messages"] = messages.map { $0.dictionary() }
+        result["countTotalFiltered"] = countTotalFiltered
+        result["countUnreadFiltered"] = countUnreadFiltered
         return result
     }
 }
@@ -1060,3 +1001,262 @@ class VariableJwtSupplier: NSObject, MMJwtSupplier {
         return jwt
     }
 }
+
+extension MobileMessagingCordova: MMInAppChatDelegate {
+    func showChat(_ command: CDVInvokedUrlCommand) {
+        MobileMessaging.inAppChat?.delegate = self
+        var presentVCModally = false
+        if command.arguments.count > 0,
+            let presentingOptions = command.arguments[0] as? [String: Any],
+            let iosOptions = presentingOptions["ios"] as? [String: Any],
+            let shouldBePresentedModally = iosOptions["shouldBePresentedModally"] as? Bool {
+            presentVCModally = shouldBePresentedModally
+        }
+
+        let vc = presentVCModally ? MMChatViewController.makeRootNavigationViewController(): MMChatViewController.makeRootNavigationViewControllerWithCustomTransition()
+        if presentVCModally {
+            vc.modalPresentationStyle = .fullScreen
+        }
+        if let rootVc = UIApplication.topViewController() {
+            rootVc.present(vc, animated: true, completion: nil)
+        } else {
+            MMLogDebug("[InAppChat] could not define root vc to present in-app-chat")
+        }
+        self.commandDelegate.sendSuccess(for: command)
+    }
+
+    func setLanguage(_ command: CDVInvokedUrlCommand) {
+        guard let localeString = command.arguments[0] as? String else {
+            self.commandDelegate?.send(errorText: "Could not retrieve locale string from arguments", for: command)
+            return
+        }
+        MobileMessaging.inAppChat?.setLanguage(localeString)
+    }
+
+    func sendContextualData(_ command: CDVInvokedUrlCommand) {
+        guard command.arguments.count > 0,
+              let metadata = command.arguments[0] as? String,
+              let allMultiThreadStrategy = command.arguments[1] as? Bool else {
+            self.commandDelegate?.send(errorText: "Could not retrieve contextual data or multi-thread strategy flag from arguments", for: command)
+            return
+        }
+
+        if let chatVC = UIApplication.topViewController() as? MMChatViewController {
+            let mtStrategy: MMChatMultiThreadStrategy = allMultiThreadStrategy ? .ALL : .ACTIVE
+            chatVC.sendContextualData(metadata, multiThreadStrategy: mtStrategy) { error in
+                guard let error = error else {
+                    return
+                }
+                self.commandDelegate?.send(errorText: "Could not send metadata, error \(error.localizedDescription) from arguments", for: command)
+            }
+        }
+    }
+
+    func setupiOSChatSettings(_ command: CDVInvokedUrlCommand) {
+        if let chatSettings = command.arguments[0] as? [String: AnyObject] {
+            MMChatSettings.settings.configureWith(rawConfig: chatSettings)
+        }
+    }
+
+    func getMessageCounter(_ command: CDVInvokedUrlCommand) {
+        let successResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: MobileMessaging.inAppChat?.getMessageCounter ?? 0)
+        self.commandDelegate?.send(successResult, callbackId: command.callbackId)
+    }
+
+    func resetMessageCounter(_ command: CDVInvokedUrlCommand) {
+        MobileMessaging.inAppChat?.resetMessageCounter()
+        self.commandDelegate.sendSuccess(for: command)
+    }
+
+    private struct ChatJwtBridge {
+        static var callbackId: String?
+        static var pendingCompletion: ((String?) -> Void)?
+        static let lock = NSLock()
+    }
+
+    @objc func setChatJwtProvider(_ command: CDVInvokedUrlCommand) {
+        ChatJwtBridge.lock.lock()
+        defer { ChatJwtBridge.lock.unlock() }
+        ChatJwtBridge.callbackId = command.callbackId
+
+        // Keep callback alive for multiple requests
+        let pluginResult = CDVPluginResult(status: .noResult)
+        pluginResult?.setKeepCallbackAs(true)
+        self.commandDelegate?.send(pluginResult, callbackId: command.callbackId)
+    }
+
+    @objc func setChatJwt(_ command: CDVInvokedUrlCommand) {
+        ChatJwtBridge.lock.lock()
+        defer { ChatJwtBridge.lock.unlock() }
+
+        let jwt = command.arguments.first as? String
+
+        // Fulfill the pending completion
+        if let completion = ChatJwtBridge.pendingCompletion {
+            completion(jwt)
+            ChatJwtBridge.pendingCompletion = nil
+        }
+
+        // Respond to JS
+        let pluginResult: CDVPluginResult
+        if jwt != nil && !(jwt?.isEmpty ?? true) {
+            pluginResult = CDVPluginResult(status: .ok)
+        } else {
+            pluginResult = CDVPluginResult(status: .error, messageAs: "Provided chat JWT is null or empty.")
+        }
+        self.commandDelegate?.send(pluginResult, callbackId: command.callbackId)
+    }
+
+    func requestChatJWTFromJS(completion: @escaping (String?) -> Void) {
+        ChatJwtBridge.lock.lock()
+        defer { ChatJwtBridge.lock.unlock() }
+
+        guard let callbackId = ChatJwtBridge.callbackId else {
+            completion(nil)
+            return
+        }
+
+        // Store completion to be called by setChatJwt
+        ChatJwtBridge.pendingCompletion = completion
+
+        // Notify JS that a JWT is requested
+        let pluginResult = CDVPluginResult(status: .ok, messageAs: "inAppChat.internal.jwtRequested")
+        pluginResult?.setKeepCallbackAs(true)
+        self.commandDelegate?.send(pluginResult, callbackId: callbackId)
+    }
+
+    @objc func getJWT() -> String? {
+        var jwt: String?
+        let semaphore = DispatchSemaphore(value: 0)
+        // Ask JS for a JWT
+        self.requestChatJWTFromJS { receivedJWT in
+            jwt = receivedJWT
+            semaphore.signal()
+        }
+        _ = semaphore.wait(timeout: .now() + 45) // 45s timeout
+        return jwt
+    }
+    
+    func setWidgetTheme(_ command: CDVInvokedUrlCommand) {
+        guard let themeName = command.arguments[0] as? String else {
+            self.commandDelegate?.send(errorText: "Could not retrieve widget theme name from arguments", for: command)
+            return
+        }
+        if let chatVC = UIApplication.topViewController() as? MMChatViewController {
+            // Real time change if we detect the chat as top VC
+            chatVC.setWidgetTheme(themeName, completion: { error in
+                if error != nil {
+                    self.commandDelegate?.send(errorText: "Could not set widget theme from arguments", for: command)
+                }
+            })
+        }
+        // And we also set the static value that is used in future loads of the widget
+        MMChatSettings.sharedInstance.widgetTheme = themeName
+    }
+    
+    struct ToolbarCustomization: Decodable {
+        var titleTextAppearance: String?
+        var titleTextColor: String?
+        var titleText: String?
+        var backgroundColor: String?
+        var navigationIcon: String?
+        var navigationIconTint: String?
+    }
+
+    struct ChatCustomization: Decodable {
+        var chatStatusBarBackgroundColor: String?
+        var chatStatusBarIconsColorMode: String?
+        var chatToolbar: ToolbarCustomization?
+        var attachmentPreviewToolbar: ToolbarCustomization?
+        var attachmentPreviewToolbarMenuItemsIconTint: String?
+        var attachmentPreviewToolbarSaveMenuItemIcon: String?
+        var chatBackgroundColor: String?
+        var chatProgressBarColor: String?
+        var chatInputTextAppearance: String?
+        var chatInputTextColor: String?
+        var chatInputBackgroundColor: String?
+        var chatInputHintText: String?
+        var chatInputHintTextColor: String?
+        var chatInputAttachmentIcon: String?
+        var chatInputAttachmentIconTint: String?
+        var chatInputAttachmentBackgroundDrawable: String?
+        var chatInputAttachmentBackgroundColor: String?
+        var chatInputSendIcon: String?
+        var chatInputSendIconTint: String?
+        var chatInputSendBackgroundDrawable: String?
+        var chatInputSendBackgroundColor: String?
+        var chatInputSeparatorLineColor: String?
+        var chatInputSeparatorLineVisible: Bool?
+        var chatInputCursorColor: String?
+        var networkErrorTextColor: String?
+        var networkErrorLabelBackgroundColor: String?
+        var shouldHandleKeyboardAppearance: Bool?
+    }
+    
+    class CustomizationUtils {
+        func setup(customization: ChatCustomization, in settings: MMChatSettings) {
+            setNotNil(&settings.navBarColor, customization.chatToolbar?.backgroundColor?.toColor())
+            setNotNil(&settings.navBarTitleColor, customization.chatToolbar?.titleTextColor?.toColor())
+            setNotNil(&settings.navBarItemsTintColor, customization.chatToolbar?.navigationIconTint?.toColor())
+            setNotNil(&settings.title, customization.chatToolbar?.titleText)
+            setNotNil(&settings.attachmentPreviewBarsColor, customization.attachmentPreviewToolbar?.backgroundColor?.toColor())
+            setNotNil(&settings.attachmentPreviewItemsColor, customization.attachmentPreviewToolbar?.navigationIconTint?.toColor())            
+            setNotNil(&settings.backgroundColor, customization.chatBackgroundColor?.toColor())
+            setNotNil(&settings.advancedSettings.mainTextColor, customization.chatInputTextColor?.toColor())
+            setNotNil(&settings.advancedSettings.textInputBackgroundColor, customization.chatInputBackgroundColor?.toColor())
+            setNotNil(&settings.advancedSettings.attachmentButtonIcon, getImage(with: customization.chatInputAttachmentIcon))
+            setNotNil(&settings.advancedSettings.sendButtonIcon, getImage(with: customization.chatInputSendIcon))
+            setNotNil(&settings.sendButtonTintColor, customization.chatInputSendIconTint?.toColor())
+            setNotNil(&settings.chatInputSeparatorLineColor, customization.chatInputSeparatorLineColor?.toColor())
+            setNotNil(&settings.advancedSettings.isLineSeparatorHidden, customization.chatInputSeparatorLineVisible)
+            setNotNil(&settings.advancedSettings.typingIndicatorColor, customization.chatInputCursorColor?.toColor())
+            setNotNil(&settings.errorLabelTextColor, customization.networkErrorTextColor?.toColor())
+            setNotNil(&settings.errorLabelBackgroundColor, customization.networkErrorLabelBackgroundColor?.toColor())
+            setNotNil(&settings.advancedSettings.mainPlaceholderTextColor, customization.chatInputHintTextColor?.toColor())
+            setNotNil(&settings.shouldHandleKeyboardAppearance, customization.shouldHandleKeyboardAppearance)
+        }
+        
+        func getImage(with name: String?) -> UIImage? {
+            guard let name = name else { return nil }
+            let bundle = Bundle(for: type(of: self))
+            guard let bundlePath = bundle.path(forResource: name, ofType: nil) else { return nil }
+            return UIImage(named: bundlePath)
+        }
+        
+        func getFont(with path: String?, size: CGFloat) -> UIFont? {
+            guard let path = path else { return nil }
+            let bundle = Bundle(for: type(of: self))
+            guard let bundlePath = bundle.path(forResource: path, ofType: nil) else { return nil }
+            guard let data = NSData(contentsOfFile: bundlePath) else { return nil }
+            guard let dataProvider = CGDataProvider(data: data) else { return nil }
+            guard let fontReference = CGFont(dataProvider) else { return nil }
+            
+            guard let fontName = URL(string: path)?.deletingPathExtension().lastPathComponent else { return nil }
+            
+            var errorReference: Unmanaged<CFError>?
+            CTFontManagerRegisterGraphicsFont(fontReference, &errorReference)
+            return UIFont(name: fontName, size: size)
+        }
+
+        func setNotNil<T>(_ forVariable: inout T, _ value:T?) {
+            if let value = value { forVariable = value }
+        }
+    }
+    
+    func setChatCustomization(_ command: CDVInvokedUrlCommand) {
+        guard let chatCustomisationDict = command.arguments[0] as? [String: AnyObject],
+        let jsonObject = try? JSONSerialization.data(withJSONObject: chatCustomisationDict),
+        let customization = try? JSONDecoder().decode(ChatCustomization.self, from: jsonObject) else {
+            self.commandDelegate?.send(errorText: "Could not retrieve widget customisation values from arguments", for: command)
+            return
+        }
+        CustomizationUtils().setup(customization: customization, in: MMChatSettings.sharedInstance)
+    }
+}
+
+extension String {
+    func toColor() -> UIColor? {
+        return UIColor(hexString: self)
+    }
+}
+

@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	id="com-infobip-plugins-mobilemessaging"
-	version="7.2.1">
+	version="7.7.1">
 
 	<name>MobileMessagingCordova</name>
 	<keywords>Infobip,push,cordova</keywords>
@@ -21,13 +21,13 @@
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
 	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 	<hook type="before_prepare" src="scripts/integrate_notification_extension.js"/>
-	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>      
+	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
-			<!-- <hook type="before_plugin_install" src="scripts/ios/editRunpathHook.js" />
+		<!-- <hook type="before_plugin_install" src="scripts/ios/editRunpathHook.js" />
 		<hook type="after_prepare" src="hooks/ios/remove_xcconfig_frameworks.js" /> -->
 		
 		<!-- <hook type="before_plugin_install" src="scripts/ios/add_swift_support.js" />-->
@@ -81,13 +81,13 @@
 		<config-file parent="com.apple.developer.icloud-services" target="*/Entitlements-Release.plist">
 			<array><string>CloudDocuments</string></array>
 		</config-file>
-		<!-- Pods for the main target -->
+
 		<podspec>
-			<pods use-frameworks="true">
-				<pod name="MobileMessaging" spec="13.8.0" />
-				<pod name="MobileMessaging/InAppChat" spec="13.8.0" />
-				<pod name="MobileMessaging/Inbox" spec="13.8.0" />
-			</pods>
+            <pods use-frameworks="true">
+                <pod name="MobileMessaging" spec="13.12.3" />
+                <pod name="MobileMessaging/InAppChat" spec="13.12.3" />
+                <pod name="MobileMessaging/Inbox" spec="13.12.3" />
+            </pods>
 		</podspec>
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 		<source-file src="src/ios/CustomMessageHandlingDelegate.swift" />
@@ -129,9 +129,11 @@
 		</config-file>
 
 		<framework src="libs/android/mobile-messaging-aar.gradle" custom="true" type="gradleReference" />
-		<framework src="com.google.android.material:material:1.4.0"/>
+		<framework src="com.google.android.material:material:1.12.0"/>
 		<framework src="androidx.exifinterface:exifinterface:1.3.3"/>
+		<framework src="androidx.core:core-ktx:1.16.0"/>
 		<source-file src="src/android/MobileMessagingCordova.java" target-dir="src/org/apache/cordova/plugin"/>
+		<source-file src="src/android/ChatCustomization.java" target-dir="src/org/apache/cordova/plugin"/>
 	</platform>
 
 </plugin>
