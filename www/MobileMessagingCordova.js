@@ -43,18 +43,18 @@ var MobileMessagingCordova = function () {
  * @name init
  * @param {JSON} config. Configuration for Mobile Messaging
  * Configuration format:
-  *  {
+ *  {
  *      applicationCode: '<The application code of your Application from Push Portal website>',
  *      inAppChatEnabled: true,
  *      fullFeaturedInAppsEnabled: true,
  *      messageStorage: '<Message storage save callback>',
  *      defaultMessageStorage: true,
  *      userDataJwt: '<JWT token for authorization of user data related operations>',
+ *      trustedDomains: ['example.com', 'trusted.org'],
  *      loggingEnabled: false,
  *      ios: {
  *          notificationTypes: ['alert', 'sound', 'badge'],
  *          forceCleanup: <Boolean>,
- *          logging: <Boolean>,
  *          registeringForRemoteNotificationsDisabled: <Boolean>,
  *          overridingNotificationCenterDelegateDisabled: <Boolean>,
  *          unregisteringForRemoteNotificationsDisabled: <Boolean>
@@ -286,6 +286,72 @@ MobileMessagingCordova.prototype.fetchInboxMessagesWithoutToken = function (exte
  */
 MobileMessagingCordova.prototype.setInboxMessagesSeen = function (externalUserId, messageIds, callback, errorCallback) {
     cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'setInboxMessagesSeen', [externalUserId, messageIds])
+};
+
+/**
+ * Sets the JWT provider used to authenticate in-app chat sessions.
+ *
+ * The `jwtProvider` is a callback function that returns a JSON Web Token (JWT)
+ * used for chat authentication. It supports both **synchronous** and **asynchronous** approaches:
+ *
+ * ### Synchronous usage:
+ * ```ts
+ * MobileMessaging.setChatJwtProvider(() => {
+ *   return "your_token"; // Return a valid JWT string directly
+ * });
+ * ```
+ *
+ * ### Asynchronous usage:
+ * ```ts
+ * MobileMessaging.setChatJwtProvider(async () => {
+ *   const jwt = await getChatToken(...);
+ *   return jwt; // Return a Promise<string> that resolves to a valid JWT
+ * });
+ * ```
+ *
+ * > ⚠️ This callback may be invoked multiple times during the widget's lifecycle 
+ * (e.g., due to screen orientation changes or network reconnection).
+ * It is important to return a **fresh and valid JWT** each time.
+ *
+ * @param jwtProvider A callback function that returns a JWT string or a Promise that resolves to one.
+ * @param errorCallback Optional error handler for catching exceptions thrown during JWT generation.
+ */
+MobileMessagingCordova.prototype.setChatJwtProvider = function (jwtProvider, errorCallback) {
+    const errorHandler = function (e) {
+        cordova.exec(null, null, "MobileMessagingCordova", "setChatJwt", [null]);
+        if (errorCallback) {
+            errorCallback(e);
+        } else {
+            console.error('Error in setChatJwtProvider(), Could not obtain chat JWT: ' + e);
+        }
+    };
+
+    cordova.exec(
+        function onEventFromNative(event) {
+            if (event == 'inAppChat.internal.jwtRequested') {
+                try {
+                    const jwtPromise = jwtProvider();
+                    if (jwtPromise && typeof jwtPromise.then === 'function') { // Handle asynchronous JWT provider of type Promise<string>
+                        jwtPromise
+                            .then(
+                                function (jwt) {
+                                    cordova.exec(null, null, "MobileMessagingCordova", "setChatJwt", [jwt]);
+                                }
+                            )
+                            .catch(errorHandler);
+                    } else { // Handle synchronous JWT provider of type () => string
+                        cordova.exec(null, null, "MobileMessagingCordova", "setChatJwt", [jwtPromise]);
+                    }
+                } catch (e) {
+                    errorHandler(e);
+                }
+            }
+        },
+        errorHandler,
+        'MobileMessagingCordova',
+        'setChatJwtProvider',
+        []
+    );
 };
 
 /**
@@ -624,9 +690,31 @@ MobileMessagingCordova.prototype.registerForAndroidRemoteNotifications = functio
  * @param {Function} errorCallback will be called on error
  */
 MobileMessagingCordova.prototype.setUserDataJwt = function (jwt, errorCallback) {
-    cordova.exec(function () {
-    }, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
+    cordova.exec(function () {}, errorCallback, 'MobileMessagingCordova', 'setUserDataJwt', [jwt]);
 }
+
+/**
+ * Sets chat customization.
+ *
+ * @name setChatCustomization
+ * @param {Object} customization - Chat customization JSON object.
+ * @param {Function} successCallback - Success callback.
+ * @param {Function} errorCallback - Error callback.
+ */
+MobileMessagingCordova.prototype.setChatCustomization = function(customization, successCallback, errorCallback) {
+    cordova.exec(successCallback, errorCallback, 'MobileMessagingCordova', 'setChatCustomization', [customization]);
+};
+
+/**
+* Sets widget theme.
+*
+* @name setWidgetTheme
+* @param {String} widgetTheme - Widget theme name.
+* @param {Function} errorCallback - Error callback.
+*/
+MobileMessagingCordova.prototype.setWidgetTheme = function(widgetTheme, errorCallback) {
+    cordova.exec(function () {}, errorCallback, 'MobileMessagingCordova', 'setWidgetTheme', [widgetTheme]);
+};
 
 // START OS-KEEP-CODE
 /**

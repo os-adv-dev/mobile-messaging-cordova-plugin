@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	id="com-infobip-plugins-mobilemessaging"
-	version="7.2.1">
+	version="7.7.1">
 
 	<name>MobileMessagingCordova</name>
 	<keywords>Infobip,push,cordova</keywords>
@@ -27,7 +27,7 @@
 		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
 
 		<!-- Add Huawei Dependencies -->
-		 <hook type="before_plugin_install" src="scripts/android/save_variables_json.js" />
+		<hook type="before_plugin_install" src="scripts/android/save_variables_json.js" />
 		<hook type="after_prepare" src="scripts/android/android_fix_google_app_id.js"/>
 
 		<config-file target="config.xml" parent="/*">
@@ -51,9 +51,11 @@
 		</config-file>
 
 		<framework src="libs/android/mobile-messaging-aar.gradle" custom="true" type="gradleReference" />
-		<framework src="com.google.android.material:material:1.4.0"/>
+		<framework src="com.google.android.material:material:1.12.0"/>
 		<framework src="androidx.exifinterface:exifinterface:1.3.3"/>
+		<framework src="androidx.core:core-ktx:1.16.0"/>
 		<source-file src="src/android/MobileMessagingCordova.java" target-dir="src/org/apache/cordova/plugin"/>
+		<source-file src="src/android/ChatCustomization.java" target-dir="src/org/apache/cordova/plugin"/>
 	</platform>
 
 </plugin>
