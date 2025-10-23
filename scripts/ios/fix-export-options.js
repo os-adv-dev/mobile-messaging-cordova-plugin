@@ -47,7 +47,7 @@ module.exports = function (context) {
                 "${secondTargetId}": "${secondTargetPP}"
             };
             exportOptions.signingStyle = 'manual';
-        }`;
+        `;
 
         // String to remove (the entire block you mentioned)
         const oldProvisioningBlock =  'if (buildOpts.provisioningProfile && bundleIdentifier) {';
