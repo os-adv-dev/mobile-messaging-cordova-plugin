@@ -38,7 +38,7 @@ module.exports = function (context) {
 
             // Remove problematic lines using string.replace()
             projectFileContent = projectFileContent
-                .replace(/^\s*(?:var|let|const)\s+plist_file_entry\s*=.*;\s*\n/gm, '')  // Removes line where plist_file_entry is declared
+                //.replace(/^\s*(?:var|let|const)\s+plist_file_entry\s*=.*;\s*\n/gm, '')  // No need to remove this one as it can impact other plugins
                 .replace(/^\s*(?:var|let|const)\s+plist_file\s*=.*;\s*\n/gm, '')        // Removes line where plist_file is declared
                 .replace(/^\s*(?:var|let|const)\s+config_file\s*=.*;\s*\n/gm, '');      // Removes line where config_file is declared
 
