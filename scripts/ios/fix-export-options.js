@@ -41,11 +41,13 @@ module.exports = function (context) {
 
         // Define the new provisioningProfiles block
         const newProvisioningProfileBlock = `
+        if (buildOpts.provisioningProfile && bundleIdentifier) {
             exportOptions.provisioningProfiles = {
                 "${firstTargetId}": "${firstTargetPP}",
                 "${secondTargetId}": "${secondTargetPP}"
             };
-            exportOptions.signingStyle = 'manual';`;
+            exportOptions.signingStyle = 'manual';
+        }`;
 
         // String to remove (the entire block you mentioned)
         const oldProvisioningBlock = `
