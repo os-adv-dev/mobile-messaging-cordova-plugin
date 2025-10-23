@@ -42,7 +42,7 @@ module.exports = function (context) {
         // Define the new provisioningProfiles block
         const newProvisioningProfileBlock = `
         if (buildOpts.provisioningProfile && bundleIdentifier) {
-            exportOptions.provisioningProfiles = {
+            buildOpts.provisioningProfile = {
                 "${firstTargetId}": "${firstTargetPP}",
                 "${secondTargetId}": "${secondTargetPP}"
             };
@@ -50,7 +50,8 @@ module.exports = function (context) {
         }`;
 
         // String to remove (the entire block you mentioned)
-        const oldProvisioningBlock = `
+        const oldProvisioningBlock =  'if (buildOpts.provisioningProfile && bundleIdentifier) {';
+        /*const oldProvisioningBlock = `
             if (buildOpts.provisioningProfile && bundleIdentifier) {
                 if (typeof buildOpts.provisioningProfile === 'string') {
                     exportOptions.provisioningProfiles = { [bundleIdentifier]: String(buildOpts.provisioningProfile) };
@@ -59,7 +60,7 @@ module.exports = function (context) {
                     exportOptions.provisioningProfiles = buildOpts.provisioningProfile;
                 }
                 exportOptions.signingStyle = 'manual';
-            }`;
+            }`;*/
 
         // Replace the old provisioning profile block with the new one
         const modifiedBuildJsContent = buildJsContent.replace(oldProvisioningBlock, newProvisioningProfileBlock);
