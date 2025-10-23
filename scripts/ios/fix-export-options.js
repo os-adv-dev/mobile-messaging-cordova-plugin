@@ -43,6 +43,7 @@ module.exports = function (context) {
         const newProvisioningProfileBlock = `
         if (buildOpts.provisioningProfile && bundleIdentifier) {
             buildOpts.provisioningProfile = {
+                ...buildOpts.provisioningProfile || {},
                 "${firstTargetId}": "${firstTargetPP}",
                 "${secondTargetId}": "${secondTargetPP}"
             };
