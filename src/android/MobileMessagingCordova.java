@@ -1428,14 +1428,25 @@ public class MobileMessagingCordova extends CordovaPlugin {
                     // START OS-KEEP-CODE
                     // This should be temporary. Feedback provided to infobip, here:
                     // https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761931158451909
+                    // and
+                    // https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
                     JSONArray messages = null;
                     try {
                         messages = json.getJSONArray("messages");
 
                         for (int i = 0; i < messages.length(); i++) {
                             JSONObject msg = messages.getJSONObject(i);
-                            String topic = msg.getJSONObject("inboxData").getJSONObject("inbox").getString("topic");
-                            msg.put("topic", topic);
+                            // Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761931158451909
+                            if (msg.has("inboxData")) {
+                                String topic = msg.getJSONObject("inboxData").getJSONObject("inbox").getString("topic");
+                                msg.put("topic", topic);
+                            }
+                            //Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
+                            if (msg.has("customPayload")) {
+                                JSONObject customPayload = msg.getJSONObject("customPayload").getJSONObject("nameValuePairs");
+                                msg.put("customPayload", customPayload);
+                            }
+                            //msg.put("internalData", internalData); // overwrite string with object
                         }
                     } catch (JSONException e) {
                         sendCallbackError(callbackContext, e.getMessage());
