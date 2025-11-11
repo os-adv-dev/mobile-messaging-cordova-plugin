@@ -1440,6 +1440,9 @@ public class MobileMessagingCordova extends CordovaPlugin {
                             if (msg.has("inboxData")) {
                                 String topic = msg.getJSONObject("inboxData").getJSONObject("inbox").getString("topic");
                                 msg.put("topic", topic);
+
+                                Boolean seen = msg.getJSONObject("inboxData").getJSONObject("inbox").getBoolean("seen");
+                                msg.put("seen", seen);
                             }
                             //Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
                             if (msg.has("customPayload")) {
