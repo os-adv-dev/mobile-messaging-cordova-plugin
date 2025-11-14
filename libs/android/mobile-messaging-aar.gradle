@@ -23,7 +23,8 @@ if (overrideAndroidSupportLibsVersion.empty || overrideAndroidSupportLibsVersion
             url 'https://maven.google.com/'
             name 'Google'
         }
-        maven { url 'https://developer.huawei.com/repo/' }
+        //Huawei dependencies not needed as we do not build the app for huawei devices
+        //maven { url 'https://developer.huawei.com/repo/' }
         mavenCentral()
     }
 }
@@ -31,7 +32,8 @@ if (overrideAndroidSupportLibsVersion.empty || overrideAndroidSupportLibsVersion
 buildscript {
     repositories {
         maven { url "https://maven.google.com" }
-        maven { url 'https://developer.huawei.com/repo/' }
+        //Huawei dependencies not needed as we do not build the app for huawei devices
+        //maven { url 'https://developer.huawei.com/repo/' }
         jcenter()
         mavenCentral()
     }
