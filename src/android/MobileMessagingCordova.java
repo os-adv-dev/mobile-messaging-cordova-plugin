@@ -1443,6 +1443,9 @@ public class MobileMessagingCordova extends CordovaPlugin {
 
                                 Boolean seen = msg.getJSONObject("inboxData").getJSONObject("inbox").getBoolean("seen");
                                 msg.put("seen", seen);
+
+                                long sendDateTime = msg.getJSONObject("inboxData").getLong("sendDateTime");
+                                msg.put("receivedTimestamp", sendDateTime);
                             }
                             //Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
                             if (msg.has("customPayload")) {
