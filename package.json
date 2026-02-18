@@ -1,14 +1,9 @@
 {
   "name": "com-infobip-plugins-mobilemessaging",
-  "version": "7.8.2",
+  "version": "8.2.1",
   "description": "Infobip Mobile Messaging Cordova Plugin",
   "main": "www/MobileMessagingCordova.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "test": "node_modules/karma/bin/karma start"
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/infobip/mobile-messaging-cordova-plugin.git"
@@ -28,16 +23,6 @@
     "url": "https://github.com/infobip/mobile-messaging-cordova-plugin/issues"
   },
   "homepage": "https://github.com/infobip/mobile-messaging-cordova-plugin#readme",
-  "devDependencies": {
-    "browserify": "^14.1.0",
-    "jasmine-core": "^2.5.2",
-    "karma": "^6.4.2",
-    "karma-browserify": "^8.1.0",
-    "karma-jasmine": "^1.1.0",
-    "karma-junit-reporter": "^1.2.0",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "watchify": "^4.0.0"
-  },
   "cordova": {
     "id": "com-infobip-plugins-mobilemessaging",
     "platforms": [

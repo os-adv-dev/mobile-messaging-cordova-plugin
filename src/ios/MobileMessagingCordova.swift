@@ -1,3 +1,11 @@
+//
+//  MobileMessagingCordova.swift
+//  MobileMessagingCordova
+//
+// Copyright (c) 2016-2025 Infobip Limited
+// Licensed under the Apache License, Version 2.0
+//
+
 import Foundation
 import UIKit
 import MobileMessaging
@@ -124,7 +132,7 @@ class MMConfiguration {
     }
 }
 
-fileprivate class MobileMessagingEventsManager {
+class MobileMessagingEventsManager {
     private var plugin: MobileMessagingCordova!
     private typealias CallbackId = String
     private typealias CordovaEventName = String
@@ -146,10 +154,12 @@ fileprivate class MobileMessagingEventsManager {
         "userUpdated": MMNotificationUserSynced,
         "deeplink": NSNotification.Name.CDVPluginHandleOpenURLWithAppSourceAndAnnotation.rawValue,
         "inAppChat.unreadMessageCounterUpdated": MMNotificationInAppChatUnreadMessagesCounterUpdated,
+        "inAppChat.availabilityUpdated": MMNotificationInAppChatAvailabilityUpdated,
     ]
     
     struct InternalEvent {
         static let idKey = "internalEventId"
+        static let debugMessageReceived = "internal.platformNativeLogSent"
         static let chatJWTRequested = "inAppChat.internal.jwtRequested"
         static let chatExceptionReceived = "inAppChat.internal.exceptionReceived"
     }
@@ -258,6 +268,10 @@ fileprivate class MobileMessagingEventsManager {
             if let counter = notification.userInfo?[MMNotificationKeyInAppChatUnreadMessagesCounter] as? Int {
                 notificationResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: [cordovaEventName, counter])
             }
+        case MMNotificationInAppChatAvailabilityUpdated:
+            if let available = notification.userInfo?[MMNotificationInAppChatAvailabilityUpdated] as? Bool {
+                notificationResult = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: [cordovaEventName, available])
+            }
         default: break
         }
 
@@ -277,6 +291,7 @@ fileprivate class MobileMessagingEventsManager {
     private var eventsManager: MobileMessagingEventsManager?
     fileprivate var isStarted: Bool = false
     private var willUseChatExceptionHandler = false
+    private var isInAppChatAvailable = false
 
     override func pluginInitialize() {
         super.pluginInitialize()
@@ -490,7 +505,8 @@ fileprivate class MobileMessagingEventsManager {
         let uaDict = context["userAttributes"] as? [String: Any]
         let ua = uaDict == nil ? nil : MMUserAttributes(dictRepresentation: uaDict!)
         let forceDepersonalize = context["forceDepersonalize"] as? Bool ?? false
-        MobileMessaging.personalize(forceDepersonalize: forceDepersonalize, userIdentity: ui, userAttributes: ua) { (error) in
+        let keepAsLead = context["keepAsLead"] as? Bool ?? false
+        MobileMessaging.personalize(forceDepersonalize: forceDepersonalize, keepAsLead: keepAsLead, userIdentity: ui, userAttributes: ua) { (error) in
             if let error = error {
                 self.commandDelegate?.send(error: error, for: command)
             } else {
@@ -687,7 +703,7 @@ fileprivate class MobileMessagingEventsManager {
         MobileMessaging.privacySettings.userDataPersistingDisabled = configuration.privacySettings[MMConfiguration.Keys.userDataPersistingDisabled].unwrap(orDefault: false)
         MobileMessaging.userAgent.pluginVersion = "cordova \(configuration.cordovaPluginVersion)"
         if (configuration.logging) {
-            MobileMessaging.logger = MMDefaultLogger()
+            MobileMessaging.logger = InfobipMobileMessagingCordovaLogger(commandDelegate)
         }
     }
 
@@ -695,6 +711,7 @@ fileprivate class MobileMessagingEventsManager {
         var mobileMessaging = mobileMessaging
         if configuration.inAppChatEnabled {
             mobileMessaging = mobileMessaging.withInAppChat()
+            MobileMessaging.inAppChat?.delegate = self
         }
 
         if configuration.fullFeaturedInAppsEnabled {
@@ -739,7 +756,7 @@ extension MMInbox {
         var result = [String: Any]()
         result["countTotal"] = countTotal
         result["countUnread"] = countUnread
-        result["messages"] = messages.map { $0.dictionary() }
+        result["messages"] = messages.map { $0.dictionaryRepresentation }
         result["countTotalFiltered"] = countTotalFiltered
         result["countUnreadFiltered"] = countUnreadFiltered
         return result
@@ -850,7 +867,7 @@ class MessageStorageAdapter: MMMessageStorage {
     func findMessage(withId messageId: MessageId) -> MMBaseMessage? {
         queue.sync() {
             sendCallback(for: "messageStorage.find", withMessage: messageId)
-            _ = findSemaphore.wait(wallTimeout: DispatchWallTime.now() + DispatchTimeInterval.seconds(30))
+            _ = findSemaphore.wait(timeout: DispatchTime.now() + DispatchTimeInterval.seconds(30))
         }
         return foundMessage
     }
@@ -946,7 +963,7 @@ private func createErrorPluginResult(description: String, errorCode: Any? = nil,
     return CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error)
 }
 
-fileprivate extension CDVCommandDelegate {
+extension CDVCommandDelegate {
     func send(errorText: String, for command: CDVInvokedUrlCommand) {
         let errorResult = createErrorPluginResult(description: errorText)
         self.send(errorResult, callbackId: command.callbackId)
@@ -1010,6 +1027,10 @@ class VariableJwtSupplier: NSObject, MMJwtSupplier {
 }
 
 extension MobileMessagingCordova: MMInAppChatDelegate {
+    func inAppChatIsEnabled(_ enabled: Bool) {
+        isInAppChatAvailable = enabled
+    }
+    
     func showChat(_ command: CDVInvokedUrlCommand) {
         MobileMessaging.inAppChat?.delegate = self
         var presentVCModally = false
@@ -1070,6 +1091,12 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
         self.commandDelegate?.send(successResult, callbackId: command.callbackId)
     }
 
+    func isChatAvailable(_ command: CDVInvokedUrlCommand) {
+        let successResult = CDVPluginResult(
+            status: CDVCommandStatus_OK, messageAs: isInAppChatAvailable)
+        self.commandDelegate?.send(successResult, callbackId: command.callbackId)
+    }
+
     func resetMessageCounter(_ command: CDVInvokedUrlCommand) {
         MobileMessaging.inAppChat?.resetMessageCounter()
         self.commandDelegate.sendSuccess(for: command)
@@ -1086,6 +1113,11 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
         static let lock = NSLock()
     }
 
+    struct MMDebugMessageBridge {
+        static var callbackId: String?
+        static let lock = NSLock()
+    }
+    
     @objc func setChatJwtProvider(_ command: CDVInvokedUrlCommand) {
         ChatJwtBridge.lock.lock()
         defer { ChatJwtBridge.lock.unlock() }
@@ -1157,6 +1189,15 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
         willUseChatExceptionHandler = enableHandler
         self.commandDelegate.sendSuccess(for: command)
     }
+
+    @objc func enablePlatformNativeLogging(_ command: CDVInvokedUrlCommand) {
+        MMDebugMessageBridge.lock.lock()
+        defer { MMDebugMessageBridge.lock.unlock() }
+        MMDebugMessageBridge.callbackId = command.callbackId
+        let pluginResult = CDVPluginResult(status: .noResult)
+        pluginResult?.setKeepCallbackAs(true)
+        self.commandDelegate?.send(pluginResult, callbackId: command.callbackId)
+    }
     
     @objc public func didReceiveException(_ exception: MMChatException) -> MMChatExceptionDisplayMode {
         guard willUseChatExceptionHandler else { return .displayDefaultAlert }
@@ -1172,7 +1213,7 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
         }
         payload["code"] = exception.code
         payload["origin"] = "LiveChat"
-        payload["platform"] = "Flutter"
+        payload["platform"] = "Cordova"
         payload[MobileMessagingEventsManager.InternalEvent.idKey] = MobileMessagingEventsManager.InternalEvent.chatExceptionReceived
         let pluginResult = CDVPluginResult(status: .ok, messageAs: payload)
         self.commandDelegate.send(pluginResult, callbackId: ChatExceptionBridge.callbackId)
@@ -1231,9 +1272,21 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
         var chatInputSeparatorLineColor: String?
         var chatInputSeparatorLineVisible: Bool?
         var chatInputCursorColor: String?
+        var chatInputCharCounterDefaultColor: String?
+        var chatInputCharCounterAlertColor: String?
         var networkErrorTextColor: String?
         var networkErrorLabelBackgroundColor: String?
         var shouldHandleKeyboardAppearance: Bool?
+        var chatBannerErrorTextColor: String?
+        var chatBannerErrorBackgroundColor: String?
+        var chatBannerErrorIcon: String?
+        var chatBannerErrorIconTint: String?
+        var chatFullScreenErrorIcon: String?
+        var chatFullScreenErrorTitleText: String?
+        var chatFullScreenErrorDescriptionText: String?
+        var chatFullScreenErrorTitleTextColor: String?
+        var chatFullScreenErrorDescriptionTextColor: String?
+        var chatFullScreenErrorBackgroundColor: String?
     }
     
     class CustomizationUtils {
@@ -1253,10 +1306,23 @@ extension MobileMessagingCordova: MMInAppChatDelegate {
             setNotNil(&settings.chatInputSeparatorLineColor, customization.chatInputSeparatorLineColor?.toColor())
             setNotNil(&settings.advancedSettings.isLineSeparatorHidden, customization.chatInputSeparatorLineVisible)
             setNotNil(&settings.advancedSettings.typingIndicatorColor, customization.chatInputCursorColor?.toColor())
-            setNotNil(&settings.errorLabelTextColor, customization.networkErrorTextColor?.toColor())
-            setNotNil(&settings.errorLabelBackgroundColor, customization.networkErrorLabelBackgroundColor?.toColor())
             setNotNil(&settings.advancedSettings.mainPlaceholderTextColor, customization.chatInputHintTextColor?.toColor())
             setNotNil(&settings.shouldHandleKeyboardAppearance, customization.shouldHandleKeyboardAppearance)
+            setNotNil(&settings.advancedSettings.charCounterDefaultColor, customization.chatInputCharCounterDefaultColor?.toColor())
+            setNotNil(&settings.advancedSettings.charCounterAlertColor, customization.chatInputCharCounterAlertColor?.toColor())
+            
+            setNotNil(&settings.networkErrorLabelTextColor, customization.networkErrorTextColor?.toColor())
+            setNotNil(&settings.networkErrorLabelBackgroundColor, customization.networkErrorLabelBackgroundColor?.toColor())
+            setNotNil(&settings.errorLabelTextColor, customization.chatBannerErrorTextColor?.toColor())
+            setNotNil(&settings.errorLabelBackgroundColor, customization.chatBannerErrorBackgroundColor?.toColor())
+            setNotNil(&settings.errorBannerIcon, getImage(with: customization.chatBannerErrorIcon))
+            setNotNil(&settings.errorBannerIconTint, customization.chatBannerErrorIconTint?.toColor())
+            setNotNil(&settings.fullScreenErrorImage, getImage(with: customization.chatFullScreenErrorIcon))
+            setNotNil(&settings.fullScreenErrorTitleText, customization.chatFullScreenErrorTitleText)
+            setNotNil(&settings.fullScreenErrorSubtitleText, customization.chatFullScreenErrorDescriptionText)
+            setNotNil(&settings.fullScreenErrorTitleTextColor, customization.chatFullScreenErrorTitleTextColor?.toColor())
+            setNotNil(&settings.fullScreenErrorSubtitleTextColor, customization.chatFullScreenErrorDescriptionTextColor?.toColor())
+            setNotNil(&settings.fullScreenErrorBackgroundColor, customization.chatFullScreenErrorBackgroundColor?.toColor())
         }
         
         func getImage(with name: String?) -> UIImage? {

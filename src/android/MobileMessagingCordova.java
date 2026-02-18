@@ -1,3 +1,11 @@
+//
+//  MobileMessagingCordova.java
+//  MobileMessagingCordova
+//
+// Copyright (c) 2016-2025 Infobip Limited
+// Licensed under the Apache License, Version 2.0
+//
+
 package org.apache.cordova.plugin;
 
 import android.Manifest;
@@ -10,10 +18,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.graphics.drawable.Drawable;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -68,26 +79,32 @@ import org.infobip.mobile.messaging.storage.SQLiteMessageStore;
 import org.infobip.mobile.messaging.util.Cryptor;
 import org.infobip.mobile.messaging.util.DeviceInformation;
 import org.infobip.mobile.messaging.util.PreferenceHelper;
+import org.infobip.mobile.messaging.util.StringUtils;
 import org.infobip.mobile.messaging.chat.InAppChat;
 import org.infobip.mobile.messaging.chat.core.JwtProvider;
 import org.infobip.mobile.messaging.chat.core.JwtProvider.JwtCallback;
 import org.infobip.mobile.messaging.chat.core.InAppChatException;
-import org.infobip.mobile.messaging.chat.view.InAppChatErrorsHandler;
 import org.infobip.mobile.messaging.chat.core.widget.LivechatWidgetLanguage;
 import org.infobip.mobile.messaging.chat.core.MultithreadStrategy;
 import org.infobip.mobile.messaging.chat.core.InAppChatEvent;
+import org.infobip.mobile.messaging.chat.view.InAppChatErrorsHandler;
+import org.infobip.mobile.messaging.chat.view.styles.InAppChatTheme;
+import org.infobip.mobile.messaging.chat.view.styles.PluginChatCustomization;
+import org.infobip.mobile.messaging.chat.view.styles.PluginChatCustomization.DrawableLoader;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MobileMessagingCordova extends CordovaPlugin {
-    private static final String TAG = "MobileMessagingCordova";
+    public static final String TAG = "MobileMessagingCordova";
 
     private static final int REQ_CODE_LOC_PERMISSION_FOR_INIT = 1;
     private static final int REQ_CODE_RESOLVE_GOOGLE_ERROR = 2;
@@ -120,13 +137,14 @@ public class MobileMessagingCordova extends CordovaPlugin {
     private static final String FUNCTION_SUBMIT_EVENT = "submitEvent";
 
     private static final String FUNCTION_REGISTER_FOR_POST_NOTIFICATIONS = "registerForAndroidRemoteNotifications";
+    private static final String FUNCTION_ENABLE_PLATFORM_NATIVE_LOGGING = "enablePlatformNativeLogging";
 
     private static final String FUNCTION_MOBILE_FETCH_INBOX = "fetchInboxMessages";
     private static final String FUNCTION_MOBILE_FETCH_INBOX_WITHOUT_TOKEN = "fetchInboxMessagesWithoutToken";
     private static final String FUNCTION_MOBILE_INBOX_SET_SEEN = "setInboxMessagesSeen";
     private static final String FUNCTION_SET_USER_DATA_JWT = "setUserDataJwt";
 
-    private static final String EVENT_KEY_ID = "internalEventId";
+    public static final String EVENT_KEY_ID = "internalEventId";
     private static final String EVENT_TOKEN_RECEIVED = "tokenReceived";
     private static final String EVENT_REGISTRATION_UPDATED = "registrationUpdated";
     private static final String EVENT_INSTALLATION_UPDATED = "installationUpdated";
@@ -142,8 +160,11 @@ public class MobileMessagingCordova extends CordovaPlugin {
     private static final String EVENT_MESSAGESTORAGE_SAVE = "messageStorage.save";
     private static final String EVENT_MESSAGESTORAGE_FIND_ALL = "messageStorage.findAll";
 
+    public static final String EVENT_PLATFORM_NATIVE_LOGS_SENT = "internal.platformNativeLogSent";
+
     private static final String FUNCTION_INAPP_CHAT_SHOW = "showChat";
     private static final String FUNCTION_INAPP_CHAT_GET_MESSAGE_COUNTER = "getMessageCounter";
+    private static final String FUNCTION_INAPP_CHAT_IS_AVAILABLE = "isChatAvailable";
     private static final String FUNCTION_INAPP_CHAT_RESET_MESSAGE_COUNTER = "resetMessageCounter";
     private static final String FUNCTION_INAPP_CHAT_SET_LANGUAGE = "setLanguage";
     private static final String FUNCTION_INAPP_CHAT_SEND_CONTEXTUAL_DATA = "sendContextualData";
@@ -154,6 +175,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
     private static final String FUNCTION_INAPP_CHAT_SET_EXCEPTION_HANDLER = "setChatExceptionHandler";
 
     private static final String EVENT_INAPP_CHAT_UNREAD_MESSAGE_COUNTER_UPDATED = "inAppChat.unreadMessageCounterUpdated";
+    private static final String EVENT_INAPP_CHAT_AVAILABILITY_UPDATED = "inAppChat.availabilityUpdated";
     private static final String EVENT_INAPP_CHAT_REQUEST_JWT = "inAppChat.internal.jwtRequested";
     private static final String EVENT_INAPP_CHAT_EXCEPTION_RECEIVED = "inAppChat.internal.exceptionReceived";
 
@@ -166,6 +188,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         put(Event.DEPERSONALIZED.getKey(), EVENT_DEPERSONALIZED);
         put(InteractiveEvent.NOTIFICATION_ACTION_TAPPED.getKey(), EVENT_NOTIFICATION_ACTION_TAPPED);
         put(InAppChatEvent.UNREAD_MESSAGES_COUNTER_UPDATED.getKey(), EVENT_INAPP_CHAT_UNREAD_MESSAGE_COUNTER_UPDATED);
+        put(InAppChatEvent.IN_APP_CHAT_AVAILABILITY_UPDATED.getKey(), EVENT_INAPP_CHAT_AVAILABILITY_UPDATED);
     }};
 
     private static final Map<String, String> messageBroadcastEventMap = new HashMap<String, String>() {{
@@ -225,6 +248,8 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 data = intent.getStringExtra(BroadcastParameter.EXTRA_INFOBIP_ID);
             } else if (InAppChatEvent.UNREAD_MESSAGES_COUNTER_UPDATED.getKey().equals(intent.getAction())) {
                 data = intent.getIntExtra(BroadcastParameter.EXTRA_UNREAD_CHAT_MESSAGES_COUNT, 0);
+            } else if (InAppChatEvent.IN_APP_CHAT_AVAILABILITY_UPDATED.getKey().equals(intent.getAction())) {
+                data = intent.getBooleanExtra(BroadcastParameter.EXTRA_IS_CHAT_AVAILABLE, false);
             }
 
             if (libraryEventReceiver != null) {
@@ -304,7 +329,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         public void onReceive(Context context, Intent intent) {
             String event = messageBroadcastEventMap.get(intent.getAction());
             if (event == null) {
-                Logger.w(TAG, "Cannot process event for broadcast: " + intent.getAction());
+                CordovaLogger.w(TAG, "Cannot process event for broadcast: " + intent.getAction());
                 return;
             }
 
@@ -322,7 +347,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
     public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
         if (requestCode == REQ_CODE_POST_NOTIFICATIONS) {
             if (registerForAndroidPermissionContext == null) {
-                Logger.e(TAG, "Callback context was null for POST_NOTIFICATIONS permission");
+                CordovaLogger.e(TAG, "Callback context was null for POST_NOTIFICATIONS permission");
                 return;
             }
             if (!cordova.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
@@ -341,7 +366,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         }
 
         if (!initContext.isValid()) {
-            Logger.e(TAG, "Initialization context is not valid, cannot complete initialization");
+            CordovaLogger.e(TAG, "Initialization context is not valid, cannot complete initialization");
             return;
         }
 
@@ -356,7 +381,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         }
 
         if (!showErrorDialogContext.isValid()) {
-            Logger.e(TAG, "Show dialog context is invalid, cannot forward information to Cordova");
+            CordovaLogger.e(TAG, "Show dialog context is invalid, cannot forward information to Cordova");
             return;
         }
 
@@ -387,7 +412,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 
-        Logger.d(TAG, "execute: " + action + " args: " + args.toString());
+        CordovaLogger.d(TAG, "execute: " + action + " args: " + args.toString());
 
         if (FUNCTION_INIT.equals(action)) {
             init(args, callbackContext);
@@ -464,6 +489,9 @@ public class MobileMessagingCordova extends CordovaPlugin {
         } else if (FUNCTION_INAPP_CHAT_GET_MESSAGE_COUNTER.equals(action)) {
             getMessageCounter(args, callbackContext);
             return true;
+        } else if (FUNCTION_INAPP_CHAT_IS_AVAILABLE.equals(action)) {
+            isChatAvailable(args, callbackContext);
+            return true;
         } else if (FUNCTION_INAPP_CHAT_RESET_MESSAGE_COUNTER.equals(action)) {
             resetMessageCounter(args, callbackContext);
             return true;
@@ -502,6 +530,10 @@ public class MobileMessagingCordova extends CordovaPlugin {
             return true;
         } else if (FUNCTION_SET_USER_DATA_JWT.equals(action)) {
             setJwtSupplier(args, callbackContext);
+            return true;
+        } else if (FUNCTION_ENABLE_PLATFORM_NATIVE_LOGGING.equals(action)) {
+            togglePlatformNativeLogging(true, callbackContext);
+            return true;
         }
 
         return false;
@@ -519,12 +551,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
             sendCallbackEvent(EVENT_DEEPLINK, libraryEventReceiver, intent.getDataString());
         }
 
-        if (configuration.loggingEnabled) {
-            MobileMessagingLogger.enforce();
-            Logger.init(true);
-        } else {
-            Logger.init(false);
-        }
+        togglePlatformNativeLogging(configuration.loggingEnabled, null);
 
         PreferenceHelper.saveString(context, MobileMessagingProperty.SYSTEM_DATA_VERSION_POSTFIX, "cordova " + configuration.cordovaPluginVersion);
 
@@ -597,7 +624,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
             Class cls = Class.forName("org.infobip.mobile.messaging.cryptor.ECBCryptorImpl");
             cryptor = (Cryptor) cls.getDeclaredConstructor(String.class).newInstance(DeviceInformation.getDeviceID(context));
         } catch (Exception e) {
-            Logger.d(TAG, "Will not migrate cryptor: " + Log.getStackTraceString(e));
+            CordovaLogger.d(TAG, "Will not migrate cryptor: " + Log.getStackTraceString(e));
         }
         if (cryptor != null) {
             builder.withCryptorMigration(cryptor);
@@ -627,7 +654,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 if (callbackContext != null) {
                     sendCallbackError(callbackContext, e.get(), googleErrorCode);
                 } else {
-                    Logger.e(TAG, "Cannot start SDK: " + e.get() + " errorCode: " + googleErrorCode);
+                    CordovaLogger.e(TAG, "Cannot start SDK: " + e.get() + " errorCode: " + googleErrorCode);
                 }
             }
         });
@@ -774,7 +801,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
             runInBackground(new Runnable() {
                 @Override
                 public void run() {
-                    mobileMessaging().personalize(ctx.userIdentity, ctx.userAttributes, ctx.forceDepersonalize, new MobileMessaging.ResultListener<User>() {
+                    mobileMessaging().personalize(ctx.userIdentity, ctx.userAttributes, ctx.forceDepersonalize, ctx.keepAsLead, new MobileMessaging.ResultListener<User>() {
                         @Override
                         public void onResult(Result<User, MobileMessagingError> result) {
                             if (result.isSuccess()) {
@@ -903,7 +930,6 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 .show();
     }
 
-
     private void showInAppChat(final JSONArray args, final CallbackContext callbackContext) {
         InAppChat.getInstance(cordova.getActivity().getApplication()).inAppChatScreen().show();
     }
@@ -914,6 +940,10 @@ public class MobileMessagingCordova extends CordovaPlugin {
 
     private void resetMessageCounter(final JSONArray args, final CallbackContext callbackContext) {
         InAppChat.getInstance(cordova.getActivity().getApplication()).resetMessageCounter();
+    }
+
+    private void isChatAvailable(final JSONArray args, final CallbackContext callbackContext) {
+        sendCallbackWithResult(callbackContext, new PluginResult(PluginResult.Status.OK, InAppChat.getInstance(cordova.getActivity().getApplication()).isChatAvailable()));
     }
 
     private void setLanguage(final JSONArray args, final CallbackContext callbackContext) {
@@ -961,7 +991,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 requestResult.setKeepCallback(true);
                 callbackContext.sendPluginResult(requestResult);
             } else {
-                Logger.e(TAG, "Callback context is null, cannot send request for JWT.");
+                CordovaLogger.e(TAG, "Callback context is null, cannot send request for JWT.");
             }
         }
 
@@ -984,11 +1014,11 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 if (cordova != null && cordova.getActivity() != null) {
                     cordova.getActivity().runOnUiThread(runnable);
                 } else {
-                    Logger.w(TAG, "CordovaInterface of Activity is null, cannot resume with JWT value on UI thread.");
+                    CordovaLogger.w(TAG, "CordovaInterface of Activity is null, cannot resume with JWT value on UI thread.");
                     runnable.run();
                 }
             } catch (Throwable t) {
-                Logger.e(TAG, "Could not resume with JWT value " + newJwt, t);
+                CordovaLogger.e(TAG, "Could not resume with JWT value " + newJwt, t);
             }
         }
 
@@ -1004,11 +1034,11 @@ public class MobileMessagingCordova extends CordovaPlugin {
                 if (cordova != null && cordova.getActivity() != null) {
                     cordova.getActivity().runOnUiThread(runnable);
                 } else {
-                    Logger.w(TAG, "CordovaInterface of Activity is null, cannot resume with JWT error on UI thread.");
+                    CordovaLogger.w(TAG, "CordovaInterface of Activity is null, cannot resume with JWT error on UI thread.");
                     runnable.run();
                 }
             } catch (Throwable t) {
-                Logger.e(TAG, "Could not resume with JWT error " + throwable.getMessage(), t);
+                CordovaLogger.e(TAG, "Could not resume with JWT error " + throwable.getMessage(), t);
             }
         }
 
@@ -1064,7 +1094,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
         try {
             jwt = resolveStringParameter(args);
         } catch (Exception e) {
-            Logger.e(TAG, "Could not parse JWT argument: " + e.getMessage(), e);
+            CordovaLogger.e(TAG, "Could not parse JWT argument: " + e.getMessage(), e);
         }
 
         if (jwt != null && !jwt.isEmpty()) {
@@ -1094,21 +1124,6 @@ public class MobileMessagingCordova extends CordovaPlugin {
     private InAppChatErrorsHandler createErrorsHandler(CallbackContext callbackContext) {
         return new InAppChatErrorsHandler() {
             @Override
-            public void handlerError(@NonNull String error) {
-                // Deprecated method
-            }
-
-            @Override
-            public void handlerWidgetError(@NonNull String error) {
-                // Deprecated method
-            }
-
-            @Override
-            public void handlerNoInternetConnectionError(boolean hasConnection) {
-                // Deprecated method
-            }
-
-            @Override
             public boolean handleError(@NonNull InAppChatException exception) {
                 try {
                     if (callbackContext != null) {
@@ -1118,16 +1133,41 @@ public class MobileMessagingCordova extends CordovaPlugin {
                         requestResult.setKeepCallback(true);
                         callbackContext.sendPluginResult(requestResult);
                     } else {
-                        Logger.e(TAG, "Callback context is null, cannot send in-app chat exception.");
+                        CordovaLogger.e(TAG, "Callback context is null, cannot send in-app chat exception.");
                     }
                 } catch (Exception e) {
-                    Logger.e(TAG, "Cannot send in-app chat exception: " + e.getMessage(), e);
+                    CordovaLogger.e(TAG, "Cannot send in-app chat exception: " + e.getMessage(), e);
                 }
                 return true;
             }
         };
     }
 
+    private PluginChatCustomization.DrawableLoader createDrawableLoader() {
+        return new PluginChatCustomization.DrawableLoader() {
+
+            @Override
+            public @Nullable Drawable loadDrawable(@NonNull Context context, @Nullable String drawableSrc) {
+                if (StringUtils.isNotBlank(drawableSrc)) {
+                    return null;
+                }
+                try {
+                    String assetPath = drawableSrc;
+                    // If the path does not include a protocol, assume it's relative to assets/www/
+                    if (!drawableSrc.contains("://")) {
+                        assetPath = "www/" + drawableSrc;
+                    }
+                    AssetManager assetManager = context.getAssets();
+                    InputStream inputStream = assetManager.open(assetPath);
+                    return Drawable.createFromStream(inputStream, null);
+                } catch (IOException e) {
+                    CordovaLogger.e(TAG, "Failed to load drawable from asset: " + drawableSrc, e);
+                    return null;
+                }
+            }
+        };
+    }
+    
     private void setChatCustomization(JSONArray args, final CallbackContext callbackContext) {
         try {
             if (args.length() == 0 || args.isNull(0)) {
@@ -1136,19 +1176,18 @@ public class MobileMessagingCordova extends CordovaPlugin {
             }
 
             JSONObject jsonMap = args.getJSONObject(0);
-            ChatCustomization customization = ChatCustomization.resolve(jsonMap);
+            PluginChatCustomization customization = PluginChatCustomization.Companion.parseOrNull(jsonMap);
 
-            cordova.getActivity().runOnUiThread(() -> {
-                try {
-                    InAppChat inAppChat = InAppChat.getInstance(cordova.getActivity().getApplication());
-                    inAppChat.setTheme(customization.createTheme(cordova.getActivity().getApplication()));
-                    sendCallbackSuccess(callbackContext);
-                } catch (Exception e) {
-                    sendCallbackError(callbackContext, "Failed to apply chat customization: " + e.getMessage());
-                }
-            });
+            if (customization != null) {
+                cordova.getActivity().runOnUiThread(() -> {
+                    InAppChatTheme theme = customization.createTheme(cordova.getActivity().getApplication(), createDrawableLoader());
+                    InAppChat.getInstance(cordova.getActivity().getApplication()).setTheme(theme);
+                });
+            } else {
+                CordovaLogger.d(TAG, "Chat customization object is null or invalid.");
+            }
         } catch (Exception e) {
-            sendCallbackError(callbackContext, "Failed to parse customization data: " + e.getMessage());
+            sendCallbackError(callbackContext, "Failed to set chat customization: " + e.getMessage());
         }
     }
 
@@ -1285,7 +1324,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                     customEvent.setDefinitionId(json.optString(UserCustomEventAtts.definitionId));
                 }
             } catch (Exception e) {
-                Logger.w(TAG, "Error when serializing CustomEvent object:" + Log.getStackTraceString(e));
+                CordovaLogger.w(TAG, "Error when serializing CustomEvent object:" + Log.getStackTraceString(e));
             }
 
             try {
@@ -1296,7 +1335,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                     customEvent.setProperties(CustomAttributesMapper.customAttsFromBackend(properties));
                 }
             } catch (Exception e) {
-                Logger.w(TAG, "Error when serializing CustomEvent object:" + Log.getStackTraceString(e));
+                CordovaLogger.w(TAG, "Error when serializing CustomEvent object:" + Log.getStackTraceString(e));
             }
 
             return customEvent;
@@ -1424,38 +1463,6 @@ public class MobileMessagingCordova extends CordovaPlugin {
             public void onResult(Result<Inbox, MobileMessagingError> result) {
                 if (result.isSuccess()) {
                     JSONObject json = InboxMapper.toJSON(result.getData());
-
-                    // START OS-KEEP-CODE
-                    // This should be temporary. Feedback provided to infobip, here:
-                    // https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761931158451909
-                    // and
-                    // https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
-                    JSONArray messages = null;
-                    try {
-                        messages = json.getJSONArray("messages");
-
-                        for (int i = 0; i < messages.length(); i++) {
-                            JSONObject msg = messages.getJSONObject(i);
-                            // Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761931158451909
-                            if (msg.has("inboxData")) {
-                                String topic = msg.getJSONObject("inboxData").getJSONObject("inbox").getString("topic");
-                                msg.put("topic", topic);
-
-                                Boolean seen = msg.getJSONObject("inboxData").getJSONObject("inbox").getBoolean("seen");
-                                msg.put("seen", seen);
-                            }
-                            //Solves https://outsystems.slack.com/archives/C06PFR3BMJ4/p1761936152794809
-                            if (msg.has("customPayload")) {
-                                JSONObject customPayload = msg.getJSONObject("customPayload").getJSONObject("nameValuePairs");
-                                msg.put("customPayload", customPayload);
-                            }
-                            //msg.put("internalData", internalData); // overwrite string with object
-                        }
-                    } catch (JSONException e) {
-                        sendCallbackError(callbackContext, e.getMessage());
-                    }
-                    //END OS-KEEP-CODE
-
                     sendCallbackSuccess(callbackContext, json);
                 } else {
                     sendCallbackError(callbackContext, result.getError().getMessage());
@@ -1536,7 +1543,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
             json.put("description", message);
             json.put("code", errorCode == null ? null : String.valueOf(errorCode));
         } catch (JSONException e) {
-            Logger.w(TAG, "Error when serializing error object:" + Log.getStackTraceString(e));
+            CordovaLogger.w(TAG, "Error when serializing error object:" + Log.getStackTraceString(e));
         }
         sendCallbackWithResult(callback, new PluginResult(PluginResult.Status.ERROR, json));
     }
@@ -1637,6 +1644,30 @@ public class MobileMessagingCordova extends CordovaPlugin {
             mobileMessaging().setJwtSupplier(() -> jwt);
         } catch (Exception e) {
             mobileMessaging().setJwtSupplier(() -> null);
+        }
+    }
+
+    private void togglePlatformNativeLogging(boolean enable, final CallbackContext callbackContext) {
+        try {
+            if (enable) {
+                if (callbackContext != null) {
+                    CordovaLogWriter writer = new CordovaLogWriter(callbackContext);
+                    CordovaLogger.useCordovaConsole(writer);
+                    MobileMessagingLogger.enforce();
+                    MobileMessagingLogger.setWriter(writer);
+                    PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+                    pluginResult.setKeepCallback(true);
+                    callbackContext.sendPluginResult(pluginResult);
+                } else {
+                    CordovaLogger.e(TAG, "Callback context is null, cannot enable platform native logging.");
+                }
+            } else {
+                CordovaLogger.useNativeLogcat();
+                MobileMessagingLogger.reset();
+            }
+        } catch (Exception e) {
+            String state = enable ? "enable" : "disable";
+            CordovaLogger.e(TAG, "Cannot " + state + " platform native logging: " + e.getMessage(), e);
         }
     }
 
@@ -1751,14 +1782,14 @@ public class MobileMessagingCordova extends CordovaPlugin {
         @Override
         public void save(Context context, Message... messages) {
             if (!saveJS(messages)) {
-                Logger.w(TAG, "JS storage not available yet, will cache");
+                CordovaLogger.w(TAG, "JS storage not available yet, will cache");
                 CacheManager.saveMessages(context, messages);
             }
         }
 
         @Override
         public void deleteAll(Context context) {
-            Logger.e(TAG, "deleteAll is not implemented because it should not be called from within library");
+            CordovaLogger.e(TAG, "deleteAll is not implemented because it should not be called from within library");
         }
 
         static void register(Context context, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -1784,10 +1815,10 @@ public class MobileMessagingCordova extends CordovaPlugin {
             }
 
             if (saveJS(messages)) {
-                Logger.d(TAG, "Saved " + messages.length + " messages from cache");
+                CordovaLogger.d(TAG, "Saved " + messages.length + " messages from cache");
             } else {
                 CacheManager.saveMessages(context, messages);
-                Logger.w(TAG, "Cannot save messages from cache, postpone");
+                CordovaLogger.w(TAG, "Cannot save messages from cache, postpone");
             }
         }
 
@@ -1834,7 +1865,7 @@ public class MobileMessagingCordova extends CordovaPlugin {
                         return MessageJson.resolveMessages(findAllResults.get(0));
                     }
                 } catch (Exception e) {
-                    Logger.e(TAG, "Cannot find messages: " + e);
+                    CordovaLogger.e(TAG, "Cannot find messages: " + e);
                 }
                 return new ArrayList<Message>();
             }
@@ -1865,29 +1896,4 @@ public class MobileMessagingCordova extends CordovaPlugin {
         }
     }
 
-    private static class Logger {
-        private static boolean isDebugLoggingEnabled = false;
-
-        static void init(boolean enableDebugLogging) {
-            isDebugLoggingEnabled = enableDebugLogging;
-        }
-
-        static void d(String tag, String message) {
-            if (isDebugLoggingEnabled) {
-                Log.d(tag, message);
-            }
-        }
-
-        static void w(String tag, String message) {
-            Log.w(tag, message);
-        }
-
-        static void e(String tag, String message) {
-            Log.e(tag, message);
-        }
-
-        static void e(String tag, String message, Throwable e) {
-            Log.e(tag, message, e);
-        }
-    }
 }
