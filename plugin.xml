@@ -24,7 +24,7 @@
 	-->
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
-	<hook type="before_prepare" src="scripts/integrate_notification_extension.js"/>
+	<hook type="before_build" src="scripts/integrate_notification_extension.js"/> <!-- OS-KEEP-CODE use before_build instead of before_prepare -->
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
