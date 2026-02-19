@@ -48,6 +48,16 @@ android {
     }
 }
 
+// temporary fix to fix incompatibility with MABS12:
+//   Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion("1.9.0")
+        }
+    }
+}
+
 // apply plugin: 'com.huawei.agconnect'
 
 dependencies {
