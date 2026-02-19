@@ -53,7 +53,7 @@ android {
 configurations.all {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jetbrains.kotlin") {
-            useVersion("1.9.0")
+            useVersion("1.9.24")//MABS 11&12 version
         }
     }
 }
