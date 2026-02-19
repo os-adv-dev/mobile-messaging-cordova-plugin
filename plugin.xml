@@ -23,7 +23,6 @@
 	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
 	-->
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
-	<hook type="before_prepare" src="scripts/integrate_notification_extension.js"/>
 	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
@@ -40,7 +39,7 @@
 
 		<!-- Creates second target and sets it up -->
 		<hook type="before_build" src="scripts/ios/edit-podfile-js.js"/>
-		<hook type="before_build" src="scripts/ios/integrate_notification_extension.js"/>
+		<hook type="before_build" src="scripts/integrate_notification_extension.js"/>
 		<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
 		<hook type="before_prepare" src="scripts/ios/editXcodeProj.js" />
 
@@ -101,7 +100,7 @@
 	</platform>
 
 	<platform name="android">
-		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS12"/>
+		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS20"/>
 
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
@@ -131,7 +130,6 @@
 		<source-file src="src/android/MobileMessagingCordova.java" target-dir="src/org/apache/cordova/plugin"/>
 		<source-file src="src/android/CordovaLogger.java" target-dir="src/org/apache/cordova/plugin"/>
 		<source-file src="src/android/CordovaLogWriter.java" target-dir="src/org/apache/cordova/plugin"/>
-		<!--<source-file src="src/android/ChatCustomization.java" target-dir="src/org/apache/cordova/plugin"/>-->
 	</platform>
 
 </plugin>
