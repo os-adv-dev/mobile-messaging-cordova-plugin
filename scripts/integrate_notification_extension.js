@@ -16,7 +16,14 @@ function getProjectName() {
 }
 
 module.exports = function(ctx) {
-    return new Promise((resolve, reject) => {
+    if (ctx.opts.platforms.indexOf('ios') < 0) { // project doesn't support ios at all
+        return;
+    }
+    if (ctx.opts.cordova.platforms.length > 0 && ctx.opts.cordova.platforms.indexOf('ios') < 0) { // corodova prepare was explicitly called for non-ios platforms
+        return;
+    }
+
+    //return new Promise((resolve, reject) => {
         const completionFilePath = path.join(ctx.opts.projectRoot, 'target_addition_complete');
 
         const ConfigParser = ctx.requireCordovaModule('cordova-common').ConfigParser;
@@ -77,10 +84,11 @@ module.exports = function(ctx) {
         if (!(appCode && appGroup && projectPath && projectMainTarget)) {
             console.log("ERROR: 'IOS_EXTENSION_APP_CODE' or 'IOS_EXTENSION_APP_GROUP' or 'IOS_EXTENSION_PROJECT_PATH' or 'IOS_EXTENSION_PROJECT_MAIN_TARGET' not defined");
             console.log('-----------------------------');
-            return reject(new Error("Required variables not defined"));
+            //return reject(new Error("Required variables not defined"));
+            return;
         }
 
-        let command = `export GEM_HOME=plugins/${ctx.opts.plugin.id}/gems; \
+        var command = ` export GEM_HOME=plugins/${ctx.opts.plugin.id}/gems; \
                        gem install --install-dir plugins/${ctx.opts.plugin.id}/gems mmine -v 1.0.0; \
                        ./plugins/${ctx.opts.plugin.id}/gems/bin/mmine integrate -a ${appCode} \
                        -p "${ctx.opts.projectRoot}/${projectPath}" \
@@ -89,7 +97,7 @@ module.exports = function(ctx) {
                        -c`;
 
         if (overrideSigning === "true") {
-            command += ' -s';
+            command += '-s ';
         }
 
         console.log("Command:  " + command);
@@ -103,12 +111,12 @@ module.exports = function(ctx) {
             }
             if (error) {
                 console.log('exec error: ' + error);
-                return reject(error); // Reject the promise on error
+                //return reject(error); // Reject the promise on error
             }
             console.log("Target integration completed successfully.");
             // Create a completion file
             fs.writeFileSync(completionFilePath, 'done');
-            resolve(); // Resolve the promise on success
+            //resolve(); // Resolve the promise on success
         });
 
         // Ensure proper logging during long-running process
@@ -123,11 +131,11 @@ module.exports = function(ctx) {
         child.on('close', (code) => {
             if (code !== 0) {
                 console.log(`Process exited with code: ${code}`);
-                reject(new Error(`Process exited with code: ${code}`)); // Reject the promise if process fails
+                //reject(new Error(`Process exited with code: ${code}`)); // Reject the promise if process fails
             } else {
                 console.log("Target integration process closed successfully.");
-                resolve(); // Resolve if the process closed successfully
+                //resolve(); // Resolve if the process closed successfully
             }
         });
-    });
+    //});
 };
