@@ -70,7 +70,8 @@ class MMConfiguration {
         self.registeringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.registeringForRemoteNotificationsDisabled].unwrap(orDefault: false)
         self.overridingNotificationCenterDelegateDisabled = ios[MMConfiguration.Keys.overridingNotificationCenterDelegateDisabled].unwrap(orDefault: false)
         self.unregisteringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.unregisteringForRemoteNotificationsDisabled].unwrap(orDefault: false)
-        self.userDataJwt = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
+        let jwtValue: String? = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
+        self.userDataJwt = (jwtValue?.isEmpty == false) ? jwtValue : nil
         self.trustedDomains = rawConfig[MMConfiguration.Keys.trustedDomains] as? [String]
 
         if let rawPrivacySettings = rawConfig[MMConfiguration.Keys.privacySettings] as? [String: Any] {
@@ -668,9 +669,11 @@ class MobileMessagingEventsManager {
     private func start(configuration: MMConfiguration, applicationCode: String, onSuccess: (() -> Void)? = nil) {
         setupMobileMessagingStaticParameters(configuration: configuration)
 
-        let mobileMessaging = MobileMessaging
-            .withApplicationCode(applicationCode, notificationType: configuration.notificationType)?
-            .withJwtSupplier(VariableJwtSupplier(jwt: configuration.userDataJwt))
+        var mobileMessaging = MobileMessaging
+            .withApplicationCode(applicationCode, notificationType: configuration.notificationType)
+        if let jwt = configuration.userDataJwt {
+            mobileMessaging = mobileMessaging?.withJwtSupplier(VariableJwtSupplier(jwt: jwt))
+        }
         
         guard let mobileMessaging = mobileMessaging else {
             MMLogError("Failed to initialize MobileMessaging instance, SDK can't start.")
