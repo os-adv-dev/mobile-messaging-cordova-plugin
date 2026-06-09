@@ -1353,10 +1353,6 @@ public class MobileMessagingCordova extends CordovaPlugin {
             throw new IllegalArgumentException("Configuration is invalid");
         }
 
-        if(config.userDataJwt.isBlank()) {
-            config.userDataJwt = null;
-        }
-
         return config;
     }
 

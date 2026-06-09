@@ -41,7 +41,7 @@ module.exports = function (context) {
 
         // Define the new provisioningProfiles block
         const newProvisioningProfileBlock = `
-        //Addded by fix-export-options.js Infobip Plugin
+        //Added by fix-export-options.js Infobip Plugin
         if (buildOpts.provisioningProfile && bundleIdentifier) {
             buildOpts.provisioningProfile = {
                 ...buildOpts.provisioningProfile || {},

@@ -70,8 +70,7 @@ class MMConfiguration {
         self.registeringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.registeringForRemoteNotificationsDisabled].unwrap(orDefault: false)
         self.overridingNotificationCenterDelegateDisabled = ios[MMConfiguration.Keys.overridingNotificationCenterDelegateDisabled].unwrap(orDefault: false)
         self.unregisteringForRemoteNotificationsDisabled = ios[MMConfiguration.Keys.unregisteringForRemoteNotificationsDisabled].unwrap(orDefault: false)
-        let jwtValue: String? = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
-        self.userDataJwt = (jwtValue?.isEmpty == false) ? jwtValue : nil
+        self.userDataJwt = rawConfig[MMConfiguration.Keys.userDataJwt].unwrap(orDefault: nil)
         self.trustedDomains = rawConfig[MMConfiguration.Keys.trustedDomains] as? [String]
 
         if let rawPrivacySettings = rawConfig[MMConfiguration.Keys.privacySettings] as? [String: Any] {
@@ -298,10 +297,6 @@ class MobileMessagingEventsManager {
         super.pluginInitialize()
         self.messageStorageAdapter = MessageStorageAdapter(plugin: self)
         MobileMessagingPluginApplicationDelegate.install()
-        // START OS-KEEP-CODE
-        // OutSystems code. Make sure to leave this here to allow notifications in notification center with app in foreground!
-        MobileMessaging.messageHandlingDelegate = CustomMessageHandlingDelegate()
-        // END OS-KEEP-CODE
         self.eventsManager = MobileMessagingEventsManager(plugin: self)
         performEarlyStartIfPossible()
     }
@@ -350,20 +345,6 @@ class MobileMessagingEventsManager {
         result?.setKeepCallbackAs(true)
         commandDelegate?.send(result, callbackId: command.callbackId)
     }
-    
-    // START OS-KEEP-CODE
-    func checkPermissions(_ command: CDVInvokedUrlCommand) {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            DispatchQueue.main.async {
-                if settings.authorizationStatus == .authorized {
-                    self.commandDelegate?.send(message: "Notifications are enabled", for: command)
-                } else {
-                    self.commandDelegate?.send(errorText: "Notifications are not enabled", for: command)
-                }
-            }
-        }
-    }
-    // END OS-KEEP-CODE
 
     func saveUser(_ command: CDVInvokedUrlCommand) {
         guard let userDataDictionary = command.arguments[0] as? [String: Any], let user = MMUser(dictRepresentation: userDataDictionary) else
@@ -669,11 +650,9 @@ class MobileMessagingEventsManager {
     private func start(configuration: MMConfiguration, applicationCode: String, onSuccess: (() -> Void)? = nil) {
         setupMobileMessagingStaticParameters(configuration: configuration)
 
-        var mobileMessaging = MobileMessaging
-            .withApplicationCode(applicationCode, notificationType: configuration.notificationType)
-        if let jwt = configuration.userDataJwt {
-            mobileMessaging = mobileMessaging?.withJwtSupplier(VariableJwtSupplier(jwt: jwt))
-        }
+        let mobileMessaging = MobileMessaging
+            .withApplicationCode(applicationCode, notificationType: configuration.notificationType)?
+            .withJwtSupplier(VariableJwtSupplier(jwt: configuration.userDataJwt))
         
         guard let mobileMessaging = mobileMessaging else {
             MMLogError("Failed to initialize MobileMessaging instance, SDK can't start.")

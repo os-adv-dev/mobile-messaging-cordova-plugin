@@ -10,51 +10,34 @@
         <engine name="cordova-android" version=">=4.1.0"/>
         <engine name="cordova-ios" version=">=7.0.0"/>
     </engines>
-	<dependency id="cordova-plugin-add-swift-support" url="https://github.com/OutSystems/cordova-plugin-add-swift-support.git#2.0.3-OS1"/>
 	<dependency id="cordova-custom-config"/>
 
 	<js-module name="mobileMessaging" src="www/MobileMessagingCordova.js">
 		<clobbers target="mobileMessaging" />
 	</js-module>
 
-	<!-- OS-NOT-NEEDED -->
-	<!--
 	<hook type="before_build" src="scripts/hms_fix_dependencies.js"/>
-	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
-	-->
 	<hook type="after_plugin_add" src="scripts/installDependencies.js"/>
-	<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
+	<hook type="after_prepare" src="scripts/android_fix_google_app_id.js"/>
+
 	<preference name="ANDROID_SUPPORT_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_GMS_VER_OVERRIDE" default="false" />
 	<preference name="ANDROID_FIREBASE_VER_OVERRIDE" default="false" />
 
 	<platform name="ios">
-		<!-- <hook type="before_plugin_install" src="scripts/ios/editRunpathHook.js" />
-		<hook type="after_prepare" src="hooks/ios/remove_xcconfig_frameworks.js" /> -->
-		
-		<!-- <hook type="before_plugin_install" src="scripts/ios/add_swift_support.js" />-->
+		<!-- MABS Custom Hooks -->
 		<hook type="before_plugin_install" src="scripts/ios/save_json_info.js" />
-		<hook type="before_plugin_install" src="scripts/install_prerequisites.js"/>
-		<hook type="before_plugin_install" src="scripts/ios/copyAndUnzipProvisioningProfiles.js"/> 
-
-		<!-- Creates second target and sets it up -->
-		<hook type="before_build" src="scripts/ios/edit-podfile-js.js"/>
-		<hook type="before_build" src="scripts/integrate_notification_extension.js"/>
-		<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js"/>
-		<hook type="before_prepare" src="scripts/ios/editXcodeProj.js" />
-
-		<!--<hook type="before_build" src="scripts/ios/pod-install.js" />-->
-		<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js"/>
-
-		<!-- before_plugin_add -->
+		<hook type="before_plugin_install" src="scripts/install_prerequisites.js" />
+		<hook type="before_plugin_install" src="scripts/ios/copyAndUnzipProvisioningProfiles.js" />
 		
-		<!--<hook type="before_plugin_install" src="scripts/ios/edit-podfile-js.js"/>-->
-		<!--<hook type="after_prepare" src="scripts/ios/podfile-add-notification-extension-target.js"/>-->
+		<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js" />
+		<hook type="before_build" src="scripts/integrate_notification_extension.js" />
 
-		<hook type="before_prepare" src="scripts/ios/list_pp_folder.js"/>
-		<hook type="after_plugin_install" src="scripts/ios/check_config_plist.js"/>
-		<hook type="after_plugin_install" src="scripts/ios/fix-export-options.js"/>
-
+		<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js" />
+		<!--<hook type="after_prepare" src="scripts/ios/list_pp_folder.js" />-->
+		
+		<hook type="after_plugin_install" src="scripts/ios/fix-export-options.js" />
+		
 		<config-file parent="UIBackgroundModes" target="*-Info.plist">
             <array>
                 <string>remote-notification</string>
@@ -66,10 +49,6 @@
 				<param name="ios-package" value="MobileMessagingCordova" />
 				<param name="onload" value="true" />
 			</feature>
-		</config-file>
-
-		<config-file parent="/widget/platform[@name='ios']" target="config.xml">
-			<preference name="UseSwiftLanguageVersion" value="5" />
 		</config-file>
 
 		<config-file parent="aps-environment" target="*/Entitlements-Debug.plist">
@@ -100,14 +79,10 @@
 		<source-file src="src/ios/MobileMessagingCordova.swift" />
 		<source-file src="src/ios/InfobipMobileMessagingCordovaLogger.swift" />
 		<source-file src="src/ios/CustomMessageHandlingDelegate.swift" />
-
-		<preference name="IOS_EXTENSION_APP_CODE" value="$IOS_EXTENSION_APP_CODE" />
-		<preference name="IOS_EXTENSION_APP_GROUP" value="$IOS_EXTENSION_APP_GROUP" />
 	</platform>
 
 	<platform name="android">
 		<dependency id="cordova-plugin-firebase-analytics" url="https://github.com/OutSystems/cordova-plugin-firebase-analytics#5.0.0-OS20"/>
-
 		<config-file target="config.xml" parent="/*">
 			<feature name="MobileMessagingCordova">
 				<param name="android-package" value="org.apache.cordova.plugin.MobileMessagingCordova"/>

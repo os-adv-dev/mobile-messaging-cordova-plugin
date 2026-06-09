@@ -23,7 +23,6 @@ if (overrideAndroidSupportLibsVersion.empty || overrideAndroidSupportLibsVersion
             url 'https://maven.google.com/'
             name 'Google'
         }
-        //Huawei dependencies not needed as we do not build the app for huawei devices
         //maven { url 'https://developer.huawei.com/repo/' }
         mavenCentral()
     }
@@ -32,7 +31,6 @@ if (overrideAndroidSupportLibsVersion.empty || overrideAndroidSupportLibsVersion
 buildscript {
     repositories {
         maven { url "https://maven.google.com" }
-        //Huawei dependencies not needed as we do not build the app for huawei devices
         //maven { url 'https://developer.huawei.com/repo/' }
         jcenter()
         mavenCentral()
@@ -48,6 +46,8 @@ android {
     }
 }
 
+// apply plugin: 'com.huawei.agconnect'
+
 // temporary fix to fix incompatibility with MABS12:
 //   Class 'kotlin.Unit' was compiled with an incompatible version of Kotlin. The actual metadata version is 2.1.0, but the compiler version 1.9.0 can read versions up to 2.0.0.
 configurations.all {
@@ -58,11 +58,9 @@ configurations.all {
     }
 }
 
-// apply plugin: 'com.huawei.agconnect'
-
 dependencies {
-    def mmHmsVersion = '8.10.0'
-    def mmFcmVersion = '14.13.0'
+    def mmHmsVersion = '8.11.1'
+    def mmFcmVersion = '14.14.2'
     // Modified by scripts/hms_fix_dependencies.js . To enable run: cordova build android --hms
     def isHmsBuild = false
 
