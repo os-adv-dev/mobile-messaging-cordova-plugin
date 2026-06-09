@@ -68,6 +68,10 @@
 			</feature>
 		</config-file>
 
+		<config-file parent="/widget/platform[@name='ios']" target="config.xml">
+			<preference name="UseSwiftLanguageVersion" value="5" />
+		</config-file>
+
 		<config-file parent="aps-environment" target="*/Entitlements-Debug.plist">
             <string>development</string>
         </config-file>
