@@ -32,8 +32,9 @@
 		
 		<hook type="before_build" src="scripts/ios/copyProvisioningProfiles.js" />
 		<hook type="before_build" src="scripts/integrate_notification_extension.js" />
+		<hook type="before_compile" src="scripts/ios/fix_podfile_extension.js" />
+		<hook type="before_build" src="scripts/ios/update_provisioning_profile.js" />
 
-		<hook type="after_prepare" src="scripts/ios/update_provisioning_profile.js" />
 		<!--<hook type="after_prepare" src="scripts/ios/list_pp_folder.js" />-->
 		
 		<hook type="after_plugin_install" src="scripts/ios/fix-export-options.js" />

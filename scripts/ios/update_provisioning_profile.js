@@ -66,13 +66,12 @@ begin
 
   target.build_configurations.each do |config|
     puts "Updating settings for: #{config.name}"
-    config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = provisioning_profile_name
+    config.build_settings['PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]'] = provisioning_profile_name
     config.build_settings['PROVISIONING_PROFILE'] = provisioning_profile_uuid
     config.build_settings['CODE_SIGN_IDENTITY'] = code_sign_identity
-    config.build_settings['DEVELOPMENT_TEAM'] = development_team
+    config.build_settings['DEVELOPMENT_TEAM[sdk=iphoneos*]'] = development_team
     config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
     config.build_settings['SWIFT_VERSION'] = '5.0'
-    config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = '@executable_path/../../Frameworks'
   end
 
   project.save

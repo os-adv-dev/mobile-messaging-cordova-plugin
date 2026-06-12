@@ -106,10 +106,9 @@ module.exports = function (ctx) {
     // Step 4: Set app group in main Info.plist
     setAppGroupInInfoPlist(mainInfoPlistPath, appGroup, plist);
 
-    // Step 5: Modify Podfile
+    // Step 5: Modify Podfile and run pod install
+    // IMPORTANT: Do this AFTER creating the Xcode target so CocoaPods can link them
     modifyPodfile(podfilePath, projectName, mmVersion);
-
-    // Step 6: Run pod install
     runPodInstall(iosPlatformPath);
 
     console.log('Infobip: Notification Service Extension integration complete');
@@ -219,6 +218,18 @@ function updateExtensionBuildSettings(xcodeProject, projectName, bundleId) {
         settings['MARKETING_VERSION'] = '1.0';
         settings['CURRENT_PROJECT_VERSION'] = '1';
         settings['SKIP_INSTALL'] = 'YES';
+
+        // CocoaPods xcconfig settings - required because Cordova's build pipeline
+        // overwrites the baseConfigurationReference that pod install sets
+        settings['PODS_BUILD_DIR'] = '"${BUILD_DIR}"';
+        settings['PODS_CONFIGURATION_BUILD_DIR'] = '"${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)"';
+        settings['PODS_ROOT'] = '"${SRCROOT}/Pods"';
+        settings['PODS_XCFRAMEWORKS_BUILD_DIR'] = '"$(PODS_CONFIGURATION_BUILD_DIR)/XCFrameworkIntermediates"';
+        settings['FRAMEWORK_SEARCH_PATHS'] = ['"$(inherited)"', '"${PODS_CONFIGURATION_BUILD_DIR}/MobileMessagingNotificationExtension"'];
+        settings['HEADER_SEARCH_PATHS'] = ['"$(inherited)"', '"${PODS_CONFIGURATION_BUILD_DIR}/MobileMessagingNotificationExtension/MobileMessagingNotificationExtension.framework/Headers"'];
+        settings['OTHER_LDFLAGS'] = ['"$(inherited)"', '"-framework"', '"MobileMessagingNotificationExtension"', '"-framework"', '"Security"', '"-framework"', '"UserNotifications"'];
+        settings['LIBRARY_SEARCH_PATHS'] = ['"$(inherited)"', '"${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}"', '"/usr/lib/swift"'];
+        settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO';
 
         // Align signing with main target
         var signing = signingSettings[cfgName] || signingSettings['Debug'] || {};
