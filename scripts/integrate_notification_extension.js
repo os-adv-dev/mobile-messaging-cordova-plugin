@@ -106,9 +106,10 @@ module.exports = function (ctx) {
     // Step 4: Set app group in main Info.plist
     setAppGroupInInfoPlist(mainInfoPlistPath, appGroup, plist);
 
-    // Step 5: Modify Podfile and run pod install
-    // IMPORTANT: Do this AFTER creating the Xcode target so CocoaPods can link them
+    // Step 5: Modify Podfile
     modifyPodfile(podfilePath, projectName, mmVersion);
+
+    // Step 6: Run pod install
     runPodInstall(iosPlatformPath);
 
     console.log('Infobip: Notification Service Extension integration complete');

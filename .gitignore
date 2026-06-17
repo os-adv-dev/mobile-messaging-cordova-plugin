@@ -14,6 +14,8 @@
 # IDEA
 /example/.idea/
 .idea/
+/CLAUDE.md
+/local_build.sh
 src/.DS_Store
 .DS_Store
 scripts/.DS_Store
