@@ -858,5 +858,18 @@ MobileMessagingCordova.prototype.setWidgetTheme = function(widgetTheme, errorCal
     cordova.exec(function () {}, errorCallback, 'MobileMessagingCordova', 'setWidgetTheme', [widgetTheme]);
 };
 
+// START OS-KEEP-CODE
+/**
+ * Check permissions on user device
+ *
+ * @name checkPermissions
+ * @param {Function} callback will be called with fetched user data on success
+ * @param {Function} errorCallback will be called on error
+ */
+MobileMessagingCordova.prototype.checkPermissions = function (callback, errorCallback) {
+    cordova.exec(callback, errorCallback, 'MobileMessagingCordova', 'checkPermissions', [])
+};
+// END OS-KEEP-CODE
+
 MobileMessaging = new MobileMessagingCordova();
 module.exports = MobileMessaging;
