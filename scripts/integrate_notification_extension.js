@@ -449,8 +449,7 @@ function modifyPodfile(podfilePath, projectName, mmVersion) {
     
     var postInstallBlock = "\npost_install do |installer|\n" +
             "  installer.pods_project.targets.each do |target|\n" +
-            "    if target.name == 'MobileMessaging' || target.name ==
-      'MobileMessagingNotificationExtension'\n" +
+            "    if target.name == 'MobileMessaging' || target.name == 'MobileMessagingNotificationExtension'\n" +
             "      target.build_configurations.each do |config|\n" +
         "        config.build_settings['SWIFT_VERSION'] = '5.7'\n" +
             "      end\n" +
