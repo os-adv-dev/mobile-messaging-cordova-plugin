@@ -456,7 +456,7 @@ function modifyPodfile(podfilePath, projectName, mmVersion) {
             "  installer.pods_project.targets.each do |target|\n" +
             "    if target.name == 'MobileMessaging' || target.name == 'MobileMessagingNotificationExtension'\n" +
             "      target.build_configurations.each do |config|\n" +
-            "        config.build_settings['SWIFT_VERSION'] = '5.7'\n" +
+            "        config.build_settings['SWIFT_VERSION'] = '6'\n" +
             "      end\n" +
             "    end\n" +
             "  end\n" +
@@ -464,11 +464,6 @@ function modifyPodfile(podfilePath, projectName, mmVersion) {
 
         podfileContent += postInstallBlock;
         console.log('Infobip: Added post_install hook to Podfile for SWIFT_VERSION');
-        modified = true;
-    } else if (podfileContent.indexOf("config.build_settings['SWIFT_VERSION'] = '6'") !== -1) {
-        // Correct previous version of Swift 6 to Swift 5.7 to avoid strict compiler errors
-        podfileContent = podfileContent.replace("config.build_settings['SWIFT_VERSION'] = '6'", "config.build_settings['SWIFT_VERSION'] = '5.7'");
-        console.log('Infobip: Updated SWIFT_VERSION in post_install hook from 6 to 5.7');
         modified = true;
     }
 

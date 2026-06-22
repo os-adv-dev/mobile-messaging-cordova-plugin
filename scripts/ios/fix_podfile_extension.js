@@ -92,7 +92,7 @@ function addPostInstallHookToPodfile(podfilePath) {
         "  installer.pods_project.targets.each do |target|\n" +
         "    if target.name == 'MobileMessaging' || target.name == 'MobileMessagingNotificationExtension'\n" +
         "      target.build_configurations.each do |config|\n" +
-        "        config.build_settings['SWIFT_VERSION'] = '5.7'\n" +
+        "        config.build_settings['SWIFT_VERSION'] = '6'\n" +
         "      end\n" +
         "    end\n" +
         "  end\n" +
