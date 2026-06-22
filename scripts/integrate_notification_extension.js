@@ -446,8 +446,19 @@ function modifyPodfile(podfilePath, projectName, mmVersion) {
         "\tproject '" + projectName + ".xcodeproj'\n" +
         podLine +
         "end\n";
+    
+    var postInstallBlock = "\npost_install do |installer|\n" +
+            "  installer.pods_project.targets.each do |target|\n" +
+            "    if target.name == 'MobileMessaging' || target.name ==
+      'MobileMessagingNotificationExtension'\n" +
+            "      target.build_configurations.each do |config|\n" +
+        "        config.build_settings['SWIFT_VERSION'] = '5.7'\n" +
+            "      end\n" +
+            "    end\n" +
+            "  end\n" +
+            "end\n";
 
-    podfileContent += extensionBlock;
+    podfileContent += extensionBlock + postInstallBlock;
     fs.writeFileSync(podfilePath, podfileContent, 'utf-8');
     console.log('Infobip: Added extension target to Podfile');
 }
