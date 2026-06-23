@@ -454,7 +454,7 @@ function modifyPodfile(podfilePath, projectName, mmVersion) {
     if (podfileContent.indexOf("post_install do |installer|") === -1) {
         var postInstallBlock = "\npost_install do |installer|\n" +
             "  installer.pods_project.targets.each do |target|\n" +
-            "    if target.name == 'MobileMessaging' || target.name == 'MobileMessagingNotificationExtension'\n" +
+            "    if target.name == 'MobileMessaging' || target.name == 'MobileMessaging-MMCore' || target.name == 'MobileMessaging-MMInAppChat' || target.name == 'MobileMessagingNotificationExtension'\n" +
             "      target.build_configurations.each do |config|\n" +
             "        config.build_settings['SWIFT_VERSION'] = '6'\n" +
             "      end\n" +
